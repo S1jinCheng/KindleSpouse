@@ -4,6 +4,8 @@
 
 Windows 桌面书库、找书试读与 Kindle 无线笔记管理。界面采用封面书库、收起的传输浮窗和直接嵌入页面的虚拟 Kindle。
 
+**首次公开版：Windows v0.3.0。** [下载安装包](https://github.com/S1jinCheng/KindleSpouse/releases/latest) · [普通用户准备与安装步骤](docs/GETTING_STARTED.zh-CN.md)。增强模式已在 Kindle Scribe 一代实测；其他型号请先核对向导中的兼容条件。安装包尚未签名。
+
 个人数据处理见 [PRIVACY.md](PRIVACY.md)，安全报告见 [SECURITY.md](SECURITY.md)，二进制分发与第三方源码对应关系见 [SOURCE_CODE.md](SOURCE_CODE.md)。参与开发后可运行 `npm run hooks:install` 启用当前仓库的推送前隐私检查。
 
 ## 从下载安装到两端连通
