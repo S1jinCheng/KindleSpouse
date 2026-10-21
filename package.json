@@ -1,0 +1,149 @@
+{
+  "name": "kindlespouse",
+  "version": "0.3.0",
+  "private": true,
+  "author": "KindleSpouse contributors",
+  "license": "MIT",
+  "description": "书库、找书试读与 Kindle 无线笔记同步。",
+  "type": "module",
+  "main": "dist-electron/main.cjs",
+  "scripts": {
+    "dev": "node scripts/install-fonts.mjs && node scripts/dev.mjs",
+    "build": "node scripts/install-fonts.mjs && node scripts/install-reader-fonts.mjs && tsc --noEmit && vite build && node scripts/build-electron.mjs",
+    "start": "electron .",
+    "test": "tsx --test tests/core.test.ts tests/upgrade.test.ts tests/sync.test.ts tests/auto-sync.test.ts tests/discovery.test.ts tests/source.test.ts tests/koreader.test.ts tests/formats.test.ts tests/library-filters.test.ts tests/annotation-edits.test.ts tests/sleep-cover.test.ts tests/device-content.test.ts tests/library-cloud.test.ts tests/native-kindle.test.ts tests/companion-setup.test.ts tests/profile-directory.test.ts",
+    "test:native-ui": "node tests/native-onboarding.mjs",
+    "test:distribution": "node --import tsx tests/distribution.mjs",
+    "test:e2e": "node tests/e2e.mjs",
+    "test:douban": "node tests/douban-reading.mjs",
+    "test:discovery-filters": "node tests/discovery-filters.mjs",
+    "check:formats": "node scripts/sync-book-formats.mjs --check",
+    "check:comments": "node scripts/check-comments.mjs",
+    "check:publication": "node scripts/check-publication.mjs",
+    "check:history": "node scripts/check-history.mjs",
+    "check:package": "node scripts/check-package.mjs",
+    "test:publication": "node --test tests/publication.test.mjs",
+    "hooks:install": "git config core.hooksPath .githooks",
+    "package": "npm run icons:build && npm run build && npm run check:package && node scripts/package.mjs",
+    "icons:build": "electron scripts/build-icons.cjs",
+    "tools:install": "node scripts/install-tools.mjs",
+    "tools:notebooks": "node scripts/install-notebook-tool.mjs",
+    "tools:reader": "node scripts/install-reader.mjs",
+    "tools:kfx": "node scripts/install-kfx-tool.mjs",
+    "tools:fonts": "node scripts/install-fonts.mjs && node scripts/install-reader-fonts.mjs",
+    "test:koreader-home": "node tests/koreader-home.mjs",
+    "tools:notebook-engine": "node scripts/install-notebook-engine.mjs",
+    "test:notebook-embedded": "node scripts/install-notebook-engine.mjs && node tests/notebook-embedded.mjs",
+    "tools:companion": "node scripts/install-companion-tools.mjs && node scripts/build-companion.mjs",
+    "test:companion": "node tests/companion.mjs",
+    "test:local-profile": "tsx tests/local-profile.mts",
+    "test:cloud": "tsx tests/cloud-roundtrip.mts",
+    "test:cloud-batch": "tsx tests/cloud-batch.mts",
+    "test:reader": "tsx tests/reader-runtime.mts",
+    "test:reader-startup": "tsx tests/reader-startup.mts",
+    "test:reader-motion": "node tests/reader-motion.mjs",
+    "test:row-download": "node tests/row-download.mjs",
+    "test:formats": "tsx tests/formats-runtime.mts",
+    "test:formats-ui": "node tests/formats-ui.mjs",
+    "test:companion-formats": "node tests/companion-formats.mjs",
+    "tools:sleep-cover": "node scripts/install-sleep-cover.mjs",
+    "package:device": "node scripts/install-reader-fonts.mjs && node --import tsx scripts/build-device-update.mjs",
+    "package:auto-receive": "node scripts/build-auto-receive-update.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "5.3.0",
+    "@fontsource-variable/noto-sans-sc": "5.3.1",
+    "epubjs": "0.3.93",
+    "fast-xml-parser": "^5.3.0",
+    "htmlparser2": "12.0.0",
+    "jszip": "^3.10.1",
+    "luaparse": "0.3.1",
+    "lucide-react": "^0.468.0",
+    "nodemailer": "10.1.7",
+    "pdfjs-dist": "6.4.299",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "sanitize-html": "^2.17.0",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@babel/parser": "8.0.7",
+    "@types/luaparse": "0.2.13",
+    "@types/node": "^24.0.0",
+    "@types/nodemailer": "^8.0.2",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/sanitize-html": "^2.16.0",
+    "@vitejs/plugin-react": "latest",
+    "electron": "44.9.0",
+    "electron-builder": "26.15.3",
+    "esbuild": "latest",
+    "playwright": "latest",
+    "tsx": "latest",
+    "typescript": "7.0.2",
+    "vite": "8.3.4"
+  },
+  "build": {
+    "appId": "com.kindlespouse.desktop",
+    "productName": "KindleSpouse",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "native",
+        "to": "native",
+        "filter": [
+          "**/*",
+          "!tools/koreader/**",
+          "!tools/notebook-koplugin/**",
+          "!tools/companion/README.html",
+          "!tools/companion/rclone.1"
+        ]
+      },
+      {
+        "from": "native/tools/koreader/squashfs-root/usr/lib/koreader",
+        "to": "native/tools/koreader/squashfs-root/usr/lib/koreader"
+      },
+      {
+        "from": "THIRD_PARTY_NOTICES.md",
+        "to": "THIRD_PARTY_NOTICES.md"
+      },
+      {
+        "from": "LICENSE",
+        "to": "LICENSE"
+      },
+      {
+        "from": "PRIVACY.md",
+        "to": "PRIVACY.md"
+      },
+      {
+        "from": "SOURCE_CODE.md",
+        "to": "SOURCE_CODE.md"
+      }
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": "nsis",
+      "artifactName": "KindleSpouse-${version}-Windows-Setup.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false,
+      "createDesktopShortcut": true
+    },
+    "portable": {
+      "artifactName": "KindleSpouse-${version}-Windows-Portable.exe"
+    }
+  },
+  "overrides": {
+    "@xmldom/xmldom": "^0.9.10"
+  }
+}

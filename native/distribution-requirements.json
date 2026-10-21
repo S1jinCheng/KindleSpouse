@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "files": [
+    "DeviceBridge.ps1",
+    "NativeCopy.cs",
+    "companion/plugin/main.lua",
+    "companion/plugin/home.lua",
+    "companion/plugin/LICENSE",
+    "companion/sync.sh",
+    "companion/catalog.sh",
+    "tools/rclone.exe",
+    "tools/zlib.exe",
+    "tools/notebook-converter/cli.mjs",
+    "tools/notebook-converter/inspect.mjs",
+    "tools/notebook-converter/package.json",
+    "tools/companion/kindlespouse-sync",
+    "tools/companion/kindlespouse-link.exe",
+    "tools/companion/rclone",
+    "tools/companion/ca.pem",
+    "tools/companion/Go-LICENSE.txt",
+    "tools/companion/rclone-LICENSE.txt",
+    "tools/companion/CA-MPL-2.0.txt",
+    "tools/sleep-screen/spouse_preset.lua",
+    "tools/sleep-screen/upstream-source.zip",
+    "tools/koreader/squashfs-root/usr/lib/koreader/reader.lua"
+  ]
+}

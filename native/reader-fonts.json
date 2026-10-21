@@ -1,0 +1,168 @@
+{
+  "version": 2,
+  "assets": [
+    {
+      "filename": "NotoSerifCJKsc-Regular.otf",
+      "url": "https://raw.githubusercontent.com/notofonts/noto-cjk/f8d157532fbfaeda587e826d4cd5b21a49186f7c/Serif/OTF/SimplifiedChinese/NotoSerifCJKsc-Regular.otf",
+      "bytes": 24543080,
+      "sha256": "2a2eae2628df83556c54018c41e20fa532c1b862c5256ae8b3f23feb918d12ca",
+      "style": "song",
+      "label": "宋体",
+      "family": "Noto Serif CJK SC",
+      "target": "koreader/fonts/kindlespouse/NotoSerifCJKsc-Regular.otf"
+    },
+    {
+      "filename": "NotoSansCJKsc-Regular.otf",
+      "url": "https://raw.githubusercontent.com/notofonts/noto-cjk/f8d157532fbfaeda587e826d4cd5b21a49186f7c/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf",
+      "bytes": 16437364,
+      "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "style": "hei",
+      "label": "黑体",
+      "family": "Noto Sans CJK SC",
+      "target": "koreader/fonts/kindlespouse/NotoSansCJKsc-Regular.otf"
+    },
+    {
+      "filename": "LXGWWenKai-Regular.ttf",
+      "url": "https://raw.githubusercontent.com/lxgw/LxgwWenKai/7ebd0771fda4285299670f83c398f32f32c7bef8/fonts/TTF/LXGWWenKai-Regular.ttf",
+      "bytes": 25928940,
+      "sha256": "2d73eea94ad808999d90c0000c239a84a33b09d4bc6ab6c5b8bbf1eda8a7fc8b",
+      "style": "kai",
+      "label": "楷体",
+      "family": "LXGW WenKai",
+      "target": "koreader/fonts/kindlespouse/LXGWWenKai-Regular.ttf"
+    },
+    {
+      "filename": "FandolFang-Regular.otf",
+      "url": "https://mirrors.ustc.edu.cn/CTAN/fonts/fandol/FandolFang-Regular.otf",
+      "bytes": 6961384,
+      "sha256": "d838ad32ce2244d8144f408c37fe71065aba6fbbc80759a4d2aa2033948d5bc9",
+      "style": "fang",
+      "label": "仿宋",
+      "family": "FandolFang",
+      "target": "koreader/fonts/kindlespouse/FandolFang-Regular.otf"
+    },
+    {
+      "filename": "NotoSerif-OFL.txt",
+      "url": "https://raw.githubusercontent.com/notofonts/noto-cjk/f8d157532fbfaeda587e826d4cd5b21a49186f7c/Serif/LICENSE",
+      "bytes": 4301,
+      "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+      "target": "kindlespouse/licenses/reader-fonts/NotoSerif-OFL.txt"
+    },
+    {
+      "filename": "NotoSans-OFL.txt",
+      "url": "https://raw.githubusercontent.com/notofonts/noto-cjk/f8d157532fbfaeda587e826d4cd5b21a49186f7c/Sans/LICENSE",
+      "bytes": 4301,
+      "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+      "target": "kindlespouse/licenses/reader-fonts/NotoSans-OFL.txt"
+    },
+    {
+      "filename": "LXGWWenKai-OFL.txt",
+      "url": "https://raw.githubusercontent.com/lxgw/LxgwWenKai/7ebd0771fda4285299670f83c398f32f32c7bef8/OFL.txt",
+      "bytes": 5171,
+      "sha256": "1a25e35da1031c6c3436fde545bb9cb5aca954e9873afe510c834b8b79bd21a0",
+      "target": "kindlespouse/licenses/reader-fonts/LXGWWenKai-OFL.txt"
+    },
+    {
+      "filename": "Fandol-COPYING.txt",
+      "url": "https://mirrors.ustc.edu.cn/CTAN/fonts/fandol/COPYING",
+      "bytes": 35737,
+      "sha256": "853b586f0d520493390e571431afaf36a5fbb27dcfd239338a7ee9b0505cb004",
+      "target": "kindlespouse/licenses/reader-fonts/Fandol-COPYING.txt"
+    },
+    {
+      "filename": "Fandol-README.txt",
+      "url": "https://mirrors.ustc.edu.cn/CTAN/fonts/fandol/README",
+      "bytes": 645,
+      "sha256": "32537e063f4c7d4aebf016d5c8279cbce13f34fc8970f24b2578a3c04d0f8ca6",
+      "target": "kindlespouse/licenses/reader-fonts/Fandol-README.txt"
+    },
+    {
+      "filename": "Fandol-0.3.zip",
+      "url": "https://mirrors.ustc.edu.cn/CTAN/fonts/fandol.zip",
+      "bytes": 26688406,
+      "sha256": "9278f01b417ded5766d98c3937192a1a6a2c73a5e94a3493fdfc932b2a55005a",
+      "target": "kindlespouse/licenses/reader-fonts/Fandol-0.3.zip"
+    },
+    {
+      "filename": "FandolSong-Regular.otf",
+      "url": "https://mirrors.ustc.edu.cn/CTAN/fonts/fandol/FandolSong-Regular.otf",
+      "bytes": 4947904,
+      "sha256": "a3820003227d4abe31fe28b493200d94a849ccfd078b50a019264f70353020b0",
+      "style": "song",
+      "label": "Fandol 宋体",
+      "family": "FandolSong",
+      "target": "koreader/fonts/kindlespouse/FandolSong-Regular.otf"
+    },
+    {
+      "filename": "FandolHei-Regular.otf",
+      "url": "https://mirrors.ustc.edu.cn/CTAN/fonts/fandol/FandolHei-Regular.otf",
+      "bytes": 5808908,
+      "sha256": "4afa97aa8751e0118617df88272b58d43691b5cffb7ea024c4580496e9f34d28",
+      "style": "hei",
+      "label": "Fandol 黑体",
+      "family": "FandolHei",
+      "target": "koreader/fonts/kindlespouse/FandolHei-Regular.otf"
+    },
+    {
+      "filename": "FandolKai-Regular.otf",
+      "url": "https://mirrors.ustc.edu.cn/CTAN/fonts/fandol/FandolKai-Regular.otf",
+      "bytes": 7790552,
+      "sha256": "ea7e7fb4f9b3ac694a68d43946e04d21deed6e8c29a7c2d3081e1a4138f2f827",
+      "style": "kai",
+      "label": "Fandol 楷体",
+      "family": "FandolKai",
+      "target": "koreader/fonts/kindlespouse/FandolKai-Regular.otf"
+    },
+    {
+      "filename": "LXGWWenKaiGB-Regular.ttf",
+      "url": "https://raw.githubusercontent.com/lxgw/LxgwWenKaiGB/66b98f37ab83603692fa23d5d4891d0acde938a7/fonts/TTF/LXGWWenKaiGB-Regular.ttf",
+      "label": "霞鹜文楷 GB",
+      "style": "kai",
+      "family": "LXGW WenKai GB",
+      "bytes": 26170696,
+      "sha256": "5561d48097d92e5ab99fe7b1459d381bbcdff533bfc479207b089c6860c3990e",
+      "target": "koreader/fonts/kindlespouse/LXGWWenKaiGB-Regular.ttf"
+    },
+    {
+      "filename": "LXGWNeoZhiSong.ttf",
+      "url": "https://github.com/lxgw/LxgwNeoZhiSong/releases/download/v1.067/LXGWNeoZhiSong.ttf",
+      "label": "霞鹜新致宋",
+      "style": "song",
+      "family": "LXGW Neo ZhiSong",
+      "bytes": 10468036,
+      "sha256": "32b398f9c6278c4ed34f413077add2c2f3c84034d463af2b9cb98f12c4c2c6cd",
+      "target": "koreader/fonts/kindlespouse/LXGWNeoZhiSong.ttf"
+    },
+    {
+      "filename": "LXGWZhenKaiSlabGB-Regular.ttf",
+      "url": "https://github.com/lxgw/LxgwZhenKai/releases/download/v0.827/LXGWZhenKaiSlabGB-Regular.ttf",
+      "label": "霞鹜臻楷 GB",
+      "style": "kai",
+      "family": "LXGW ZhenKai Slab GB",
+      "bytes": 17453376,
+      "sha256": "bf4ea8c39b51784469020120125715d3075137233fe337b5d0a7327f9dfc03bd",
+      "target": "koreader/fonts/kindlespouse/LXGWZhenKaiSlabGB-Regular.ttf"
+    },
+    {
+      "filename": "LXGWWenKaiGB-OFL.txt",
+      "url": "https://raw.githubusercontent.com/lxgw/LxgwWenKaiGB/66b98f37ab83603692fa23d5d4891d0acde938a7/OFL.txt",
+      "bytes": 5173,
+      "sha256": "a8aa32c38a3402ba4e40fb6d39c913300dd4a0336290dce5c14e3a2f9308d092",
+      "target": "kindlespouse/licenses/reader-fonts/LXGWWenKaiGB-OFL.txt"
+    },
+    {
+      "filename": "LXGWNeoZhiSong-LICENSE.md",
+      "url": "https://raw.githubusercontent.com/lxgw/LxgwNeoZhiSong/76f314bf4aa5ca7598283fa51d31f0624511afb0/LICENSE.md",
+      "bytes": 20613,
+      "sha256": "1483c7de02dcf8b9c54b3b1aacabf7d6bdf32d412ca6724c0292ea68e862d8cf",
+      "target": "kindlespouse/licenses/reader-fonts/LXGWNeoZhiSong-LICENSE.md"
+    },
+    {
+      "filename": "LXGWZhenKai-OFL.txt",
+      "url": "https://raw.githubusercontent.com/lxgw/LxgwZhenKai/524b675c35b105b5ca2b23e8f4793014467bc97d/OFL.txt",
+      "bytes": 5361,
+      "sha256": "1ee66a22ddfa5241d407a5fd9a2ba666c4de5700f17182d5ee729e0434e7b42d",
+      "target": "kindlespouse/licenses/reader-fonts/LXGWZhenKai-OFL.txt"
+    }
+  ]
+}

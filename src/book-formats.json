@@ -1,0 +1,302 @@
+{
+  "epub": {
+    "mime": "application/epub+zip",
+    "layout": "rolling",
+    "kind": "epub"
+  },
+  "epub3": {
+    "mime": "application/epub+zip",
+    "layout": "rolling",
+    "kind": "epub"
+  },
+  "pdf": {
+    "mime": "application/pdf",
+    "layout": "page",
+    "kind": "pdf"
+  },
+  "mobi": {
+    "mime": "application/x-mobipocket-ebook",
+    "layout": "rolling",
+    "kind": "mobi"
+  },
+  "azw": {
+    "mime": "application/vnd.amazon.mobi8-ebook",
+    "layout": "rolling",
+    "kind": "mobi"
+  },
+  "prc": {
+    "mime": "application/vnd.palm",
+    "layout": "rolling",
+    "kind": "palm"
+  },
+  "pdb": {
+    "mime": "application/vnd.palm",
+    "layout": "rolling",
+    "kind": "palm"
+  },
+  "fb2": {
+    "mime": "application/x-fictionbook+xml",
+    "layout": "rolling",
+    "kind": "xml"
+  },
+  "fb2.zip": {
+    "mime": "application/fb2+zip",
+    "layout": "rolling",
+    "kind": "zip"
+  },
+  "fb3": {
+    "mime": "application/fb3",
+    "layout": "rolling",
+    "kind": "zip"
+  },
+  "txt": {
+    "mime": "text/plain",
+    "layout": "rolling",
+    "kind": "text"
+  },
+  "md": {
+    "mime": "text/plain",
+    "layout": "rolling",
+    "kind": "text"
+  },
+  "log": {
+    "mime": "text/plain",
+    "layout": "rolling",
+    "kind": "text"
+  },
+  "txt.zip": {
+    "mime": "application/txt+zip",
+    "layout": "rolling",
+    "kind": "zip"
+  },
+  "md.zip": {
+    "mime": "application/zip",
+    "layout": "rolling",
+    "kind": "zip"
+  },
+  "log.zip": {
+    "mime": "application/zip",
+    "layout": "rolling",
+    "kind": "zip"
+  },
+  "html": {
+    "mime": "text/html",
+    "layout": "rolling",
+    "kind": "html"
+  },
+  "htm": {
+    "mime": "text/html",
+    "layout": "rolling",
+    "kind": "html"
+  },
+  "xhtml": {
+    "mime": "application/xhtml+xml",
+    "layout": "rolling",
+    "kind": "html"
+  },
+  "html.zip": {
+    "mime": "application/html+zip",
+    "layout": "rolling",
+    "kind": "zip"
+  },
+  "htmlz": {
+    "mime": "application/html+zip",
+    "layout": "rolling",
+    "kind": "zip"
+  },
+  "htm.zip": {
+    "mime": "application/zip",
+    "layout": "rolling",
+    "kind": "zip"
+  },
+  "rtf": {
+    "mime": "application/rtf",
+    "layout": "rolling",
+    "kind": "rtf"
+  },
+  "rtf.zip": {
+    "mime": "application/rtf+zip",
+    "layout": "rolling",
+    "kind": "zip"
+  },
+  "doc": {
+    "mime": "application/msword",
+    "layout": "rolling",
+    "kind": "compound"
+  },
+  "docx": {
+    "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "layout": "rolling",
+    "kind": "zip"
+  },
+  "docm": {
+    "mime": "application/vnd.ms-word.document.macroEnabled.12",
+    "layout": "rolling",
+    "kind": "zip"
+  },
+  "odt": {
+    "mime": "application/vnd.oasis.opendocument.text",
+    "layout": "rolling",
+    "kind": "zip"
+  },
+  "chm": {
+    "mime": "application/vnd.ms-htmlhelp",
+    "layout": "rolling",
+    "kind": "chm"
+  },
+  "tcr": {
+    "mime": "application/tcr",
+    "layout": "rolling",
+    "kind": "tcr"
+  },
+  "xml": {
+    "mime": "application/xml",
+    "layout": "rolling",
+    "kind": "xml"
+  },
+  "djvu": {
+    "mime": "image/vnd.djvu",
+    "layout": "page",
+    "kind": "djvu"
+  },
+  "djv": {
+    "mime": "image/vnd.djvu",
+    "layout": "page",
+    "kind": "djvu"
+  },
+  "xps": {
+    "mime": "application/oxps",
+    "layout": "page",
+    "kind": "zip"
+  },
+  "cbz": {
+    "mime": "application/vnd.comicbook+zip",
+    "layout": "page",
+    "kind": "zip"
+  },
+  "cbr": {
+    "mime": "application/vnd.comicbook-rar",
+    "layout": "page",
+    "kind": "rar"
+  },
+  "cbt": {
+    "mime": "application/vnd.comicbook+tar",
+    "layout": "page",
+    "kind": "tar"
+  },
+  "zip": {
+    "mime": "application/zip",
+    "layout": "page",
+    "kind": "zip"
+  },
+  "tar": {
+    "mime": "application/x-tar",
+    "layout": "page",
+    "kind": "tar"
+  },
+  "cfb": {
+    "mime": "application/octet-stream",
+    "layout": "page",
+    "kind": "compound"
+  },
+  "pptx": {
+    "mime": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "layout": "page",
+    "kind": "zip"
+  },
+  "xlsx": {
+    "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "layout": "page",
+    "kind": "zip"
+  },
+  "jpg": {
+    "mime": "image/jpeg",
+    "layout": "page",
+    "kind": "image"
+  },
+  "jpeg": {
+    "mime": "image/jpeg",
+    "layout": "page",
+    "kind": "image"
+  },
+  "png": {
+    "mime": "image/png",
+    "layout": "page",
+    "kind": "image"
+  },
+  "webp": {
+    "mime": "image/webp",
+    "layout": "page",
+    "kind": "image"
+  },
+  "gif": {
+    "mime": "image/gif",
+    "layout": "page",
+    "kind": "image"
+  },
+  "svg": {
+    "mime": "image/svg+xml",
+    "layout": "rolling",
+    "kind": "xml"
+  },
+  "tif": {
+    "mime": "image/tiff",
+    "layout": "page",
+    "kind": "image"
+  },
+  "tiff": {
+    "mime": "image/tiff",
+    "layout": "page",
+    "kind": "image"
+  },
+  "hdp": {
+    "mime": "image/vnd.ms-photo",
+    "layout": "page",
+    "kind": "image"
+  },
+  "jxr": {
+    "mime": "image/jxr",
+    "layout": "page",
+    "kind": "image"
+  },
+  "wdp": {
+    "mime": "image/vnd.ms-photo",
+    "layout": "page",
+    "kind": "image"
+  },
+  "j2k": {
+    "mime": "image/jp2",
+    "layout": "page",
+    "kind": "image"
+  },
+  "jp2": {
+    "mime": "image/jp2",
+    "layout": "page",
+    "kind": "image"
+  },
+  "pam": {
+    "mime": "image/x-portable-arbitrarymap",
+    "layout": "page",
+    "kind": "image"
+  },
+  "pbm": {
+    "mime": "image/x-portable-bitmap",
+    "layout": "page",
+    "kind": "image"
+  },
+  "pgm": {
+    "mime": "image/x-portable-graymap",
+    "layout": "page",
+    "kind": "image"
+  },
+  "pnm": {
+    "mime": "image/x-portable-anymap",
+    "layout": "page",
+    "kind": "image"
+  },
+  "ppm": {
+    "mime": "image/x-portable-pixmap",
+    "layout": "page",
+    "kind": "image"
+  }
+}

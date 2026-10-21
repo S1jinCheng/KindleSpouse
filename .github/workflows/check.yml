@@ -1,0 +1,59 @@
+name: Check
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  usb-bridge:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - run: powershell.exe -NoProfile -NonInteractive -File tests/device-bridge.ps1
+      - shell: powershell
+        run: Add-Type -Path native/NativeCopy.cs
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run check:comments
+      - run: npm run check:formats
+      - run: npm run check:publication
+      - run: npm run check:history
+      - run: npm run test:publication
+      - run: npm run build
+      - run: npm test
+      - run: sudo apt-get install -y --no-install-recommends lua5.4 rclone
+      - run: npm run test:cloud-batch
+        env:
+          KINDLESPOUSE_TEST_RCLONE: rclone
+      - run: lua5.4 tests/companion-ui.lua
+      - run: lua5.4 tests/reader-bridge.lua
+      - run: lua5.4 tests/reader-switch.lua
+      - run: lua5.4 tests/annotation-apply.lua
+      - run: lua5.4 tests/sleep-cover-cache.lua
+      - run: sh -n native/companion/sync.sh
+      - run: sh -n native/companion/catalog.sh
+      - run: npm audit --omit=dev --audit-level=high
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.2'
+          cache: false
+      - run: go test ./...
+        working-directory: native/companion
+      - run: |
+          mkdir -p ../../.test-data ../tools/companion
+          go build -trimpath -o ../../.test-data/companion-test.exe .
+          go build -trimpath -o ../tools/companion/kindlespouse-link.exe ./cmd/lan-identity
+          GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -trimpath -o ../tools/companion/kindlespouse-sync .
+        working-directory: native/companion
+      - run: node node_modules/tsx/dist/cli.mjs tests/local-profile.mts
+        env:
+          KINDLESPOUSE_TEST_RCLONE: rclone

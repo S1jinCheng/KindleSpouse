@@ -1,0 +1,19 @@
+{
+  "items": [
+    {
+      "name": "KindleSpouse Notebook Lab",
+      "items": [
+        {
+          "name": "Test Notebook tab and record navigation",
+          "action": "sh /mnt/us/extensions/kindlespouse-notebook-lab/probe.sh start",
+          "status": false
+        },
+        {
+          "name": "Record navigation only (3 minutes)",
+          "action": "sh /mnt/us/extensions/kindlespouse-notebook-lab/probe.sh record",
+          "status": false
+        }
+      ]
+    }
+  ]
+}
