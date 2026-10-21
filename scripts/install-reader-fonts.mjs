@@ -8,10 +8,22 @@ await mkdir(directory, { recursive: true })
 for (const asset of manifest.assets) {
   const filename = new URL(asset.filename, directory)
   if (hash(await readFile(filename).catch(() => Buffer.alloc(0))) === asset.sha256) continue
-  const response = await fetch(asset.url, { signal: AbortSignal.timeout(120000) })
-  if (!response.ok || Number(response.headers.get('content-length')) > asset.bytes) throw new Error(`Could not obtain ${asset.filename}.`)
-  const bytes = Buffer.from(await response.arrayBuffer())
-  if (bytes.length !== asset.bytes || hash(bytes) !== asset.sha256) throw new Error(`${asset.filename} fingerprint mismatch.`)
+  const urls = asset.url.includes('/CTAN/')
+    ? [asset.url.replace('https://mirrors.ustc.edu.cn/CTAN/', 'https://ctan.math.illinois.edu/'), asset.url.replace('https://mirrors.ustc.edu.cn/CTAN/', 'https://mirrors.ctan.org/'), asset.url]
+    : [asset.url]
+  let bytes
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(30000) })
+      if (!response.ok || Number(response.headers.get('content-length')) > asset.bytes) throw new Error(`Could not obtain ${asset.filename}.`)
+      const downloaded = Buffer.from(await response.arrayBuffer())
+      if (downloaded.length !== asset.bytes || hash(downloaded) !== asset.sha256) throw new Error(`${asset.filename} fingerprint mismatch.`)
+      bytes = downloaded
+      break
+    } catch (error) {
+      if (url === urls.at(-1)) throw error
+    }
+  }
   const temporary = new URL(asset.filename + '.partial', directory)
   await writeFile(temporary, bytes)
   await rename(temporary, filename)
