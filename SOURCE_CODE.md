@@ -8,6 +8,12 @@ Repository: https://github.com/S1jinCheng/KindleSpouse
 
 For a public binary release, provide the exact application tag or commit and its source archive alongside the installer. Preserve this file, `LICENSE`, `PRIVACY.md`, `THIRD_PARTY_NOTICES.md` and the generated dependency license directory. Build instructions are in `README.md` and the `scripts` directory.
 
+## v0.3.1 release source assets
+
+The [v0.3.1 release](https://github.com/S1jinCheng/KindleSpouse/releases/tag/v0.3.1) provides `KindleSpouse-v0.3.1-source.zip` at its exact application tag and `SHA256SUMS.txt` for the installer and application source. The Windows Calibre import helper and its generated-file regression tests are included in that source archive. Run the Windows tests with `calibre-debug.exe --exec-file tests/calibre-import.py`.
+
+The bundled third-party runtime versions and source inputs are unchanged from v0.3.0. Their corresponding source archives remain available with the [v0.3.0 release](https://github.com/S1jinCheng/KindleSpouse/releases/tag/v0.3.0): `KOReader-v2026.07.1-recursive-source.zip`, `KOReader-v2026.07.1-dependency-sources.zip` and `KindleSpouse-v0.3.0-third-party-source.zip`. Their pinned revisions and build information are described below. The v0.3.1 installer is built from its application tag.
+
 ## v0.3.0 release source assets
 
 The [v0.3.0 release](https://github.com/S1jinCheng/KindleSpouse/releases/tag/v0.3.0) supplies:
