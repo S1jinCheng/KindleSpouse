@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
-import { copyFile, mkdir, readFile, stat, writeFile } from 'node:fs/promises'
+import { copyFile, mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { parse } from 'luaparse'
 import { contentHash, MAX_BOOK_BYTES } from './books'
@@ -9,6 +9,7 @@ import { runProcess } from './process'
 import { notebookIdentity, readNotebookTitles } from './notebook-titles'
 import { mergeNote } from './annotation-edits'
 import { isLibraryBook } from './device-content'
+import { notebookManifest, notebookOrigin, notebookSourceKey, storedNotebookOrigin } from './notebook-origin'
 import type { Notebook, ReadingNote, StoredNotebook, StoredCandidate } from '../src/shared'
 
 const noteId = (note: Omit<ReadingNote, 'id'>) =>
@@ -219,7 +220,7 @@ export class NotebookLibrary {
   notebooks(): Notebook[] {
     return this.store
       .list<StoredNotebook>('notebooks')
-      .map(({ path: original, pdfPath, pdfHash, sourceKey, ...book }) => book)
+      .map(({ path: original, pdfPath, pdfHash, sourceKey, origin, ...book }) => book)
       .sort((a, b) => a.title.localeCompare(b.title, 'zh-CN', { numeric: true }))
   }
   notes() {
@@ -290,12 +291,59 @@ export class NotebookLibrary {
     return id
   }
 
-  async importSnapshot(snapshot: string) {
-    const root = path.resolve(snapshot)
-    const manifest = JSON.parse(await readFile(path.join(root, 'snapshot-manifest.json'), 'utf8')) as {
-      deviceId?: string
-      files: { relative: string; bytes: number; sha256: string }[]
+  private originMigration?: Promise<void>
+
+  migrateOrigins() {
+    if (this.originMigration) return this.originMigration
+    this.originMigration = (async () => {
+      const updates: { id: string; origin: NonNullable<StoredNotebook['origin']> }[] = []
+      for (const book of this.store.list<StoredNotebook>('notebooks')) {
+        if (book.origin?.kind === 'device') continue
+        const origin = await storedNotebookOrigin(book, this.directory)
+        if (origin && (!book.origin || origin.kind === 'device')) updates.push({ id: book.id, origin })
+      }
+      if (!updates.length) return
+      await this.store.backup(path.join(this.directory, 'migration-backups', `before-notebook-origins-${randomUUID()}.sqlite`))
+      this.store.transaction(() => {
+        for (const { id, origin } of updates) this.store.put('notebooks', id, { ...this.book(id), origin, sourceKey: notebookSourceKey(origin) })
+      })
+    })().finally(() => { this.originMigration = undefined })
+    return this.originMigration
+  }
+
+  async recoverDeviceNotebooks() {
+    await this.migrateOrigins()
+    if (this.store.get('data-migrations', 'notebook-device-identity-v1')) return
+    const snapshots = new Map<string, { directory: string; time: number }>()
+    const scan = async (directory: string, depth: number) => {
+      const bytes = await readFile(path.join(directory, 'snapshot-manifest.json')).catch(() => undefined)
+      if (bytes) {
+        let value: unknown
+        try { value = JSON.parse(bytes.toString('utf8')) } catch { return }
+        const parsed = notebookManifest.safeParse(value)
+        if (parsed.success && parsed.data.deviceId && parsed.data.files.some(file => /^\.notebooks\/.+(?:\/nbk|\.pdf)$/i.test(file.relative.replaceAll('\\', '/')))) {
+          const stamp = Date.parse(parsed.data.createdAt ?? '')
+          const time = Number.isFinite(stamp) ? stamp : (await stat(path.join(directory, 'snapshot-manifest.json'))).mtimeMs
+          const previous = snapshots.get(parsed.data.deviceId)
+          if (!previous || time > previous.time) snapshots.set(parsed.data.deviceId, { directory, time })
+        }
+        return
+      }
+      if (!depth) return
+      for (const entry of await readdir(directory, { withFileTypes: true }).catch(() => [])) if (entry.isDirectory() && !entry.isSymbolicLink()) await scan(path.join(directory, entry.name), depth - 1)
     }
+    for (const root of ['notes-backups', 'device-backups', 'cloud-snapshots']) await scan(path.join(this.directory, root), 3)
+    if (snapshots.size) {
+      await this.store.backup(path.join(this.directory, 'migration-backups', `before-notebook-recovery-${randomUUID()}.sqlite`))
+      for (const { directory } of snapshots.values()) await this.importSnapshot(directory, { notebooksOnly: true })
+    }
+    this.store.put('data-migrations', 'notebook-device-identity-v1', { completedAt: new Date().toISOString() })
+  }
+
+  async importSnapshot(snapshot: string, options: { notebooksOnly?: boolean } = {}) {
+    const root = path.resolve(snapshot)
+    const manifest = notebookManifest.parse(JSON.parse(await readFile(path.join(root, 'snapshot-manifest.json'), 'utf8')))
+    await this.migrateOrigins()
     let notebookCount = 0,
       noteCount = 0,
       unreadable = 0
@@ -306,6 +354,7 @@ export class NotebookLibrary {
       const isClippings = /(?:^|\/)My Clippings\.txt$/i.test(relative)
       const isLua = /\.sdr\/metadata\.[^/]+\.lua$/i.test(relative)
       if (!isNotebook && !isPdf && !isClippings && !isLua) continue
+      if (options.notebooksOnly && !isNotebook && !isPdf) continue
       const filename = path.resolve(root, relative)
       if (!filename.startsWith(root + path.sep) || file.bytes > MAX_BOOK_BYTES)
         throw new Error('笔记快照含无效路径或过大的文件。')
@@ -313,8 +362,10 @@ export class NotebookLibrary {
       if (bytes.length !== file.bytes || contentHash(bytes) !== file.sha256)
         throw new Error('笔记快照校验失败，原件已保留。')
       if (isNotebook || isPdf) {
-        const sourceKey = contentHash(Buffer.from(relative))
+        const origin = notebookOrigin(root, relative, manifest.deviceId)
+        const sourceKey = notebookSourceKey(origin)
         const existing = this.store.list<StoredNotebook>('notebooks').find((book) => book.sourceKey === sourceKey)
+        if (options.notebooksOnly && existing) continue
         const id = existing?.id ?? randomUUID()
         const unchanged = existing?.sha256 === file.sha256
         const format = isPdf ? 'pdf' : 'nbk'
@@ -349,6 +400,7 @@ export class NotebookLibrary {
           importedAt: new Date().toISOString(),
           path: filename,
           sourceKey,
+          origin,
           format,
           status: unchanged && existing?.status === 'ready' ? 'ready' : format === 'pdf' ? 'ready' : 'original',
           pdfPath: format === 'pdf' ? filename : unchanged ? existing?.pdfPath : undefined,
@@ -389,8 +441,8 @@ export class NotebookLibrary {
         }
       }
     }
-    await this.classify()
-    this.matchTitles(root)
+    if (!options.notebooksOnly) await this.classify()
+    if (!options.notebooksOnly) await this.matchTitles(root, manifest.deviceId)
     this.linkBooks()
     this.changed()
     return {
@@ -493,7 +545,8 @@ export class NotebookLibrary {
     this.changed()
   }
 
-  matchTitles(snapshot: string) {
+  async matchTitles(snapshot: string, deviceId?: string) {
+    await this.migrateOrigins()
     const titles = new Map<string, string>()
     const errors: string[] = []
     let catalogs = 0
@@ -507,6 +560,7 @@ export class NotebookLibrary {
     }
     for (const book of this.store.list<StoredNotebook>('notebooks')) {
       if (book.titleSource === 'manual' || !book.identity) continue
+      if (deviceId ? book.origin?.kind !== 'device' || book.origin.deviceId !== deviceId : book.origin?.kind !== 'snapshot' || path.resolve(book.origin.directory) !== path.resolve(snapshot)) continue
       const title = titles.get(notebookIdentity(book.identity))
       if (title) this.store.put('notebooks', book.id, { ...book, title, titleSource: 'device' })
     }

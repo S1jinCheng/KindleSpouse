@@ -21,4 +21,16 @@ if (Test-ComponentPath 'kindlespouse/rclone.conf' $false) { throw 'Public update
 foreach ($relative in @('kindlespouse/config.json','kindlespouse/rclone.conf','kindlespouse/lan.json','koreader/plugins/kindlespouse.koplugin/main.lua','koreader/fonts/kindlespouse/Font.otf')) {
     if (-not (Test-ComponentPath $relative $true)) { throw 'Valid component path rejected.' }
 }
-@{passed=$true;massStorage=$true;mtpStorage=$true;unsafePathsRejected=$true;credentialsProtected=$true} | ConvertTo-Json -Compress
+$script:pairingText = $null
+function Read-DeviceText($root, [string]$relative, [string]$scratch) {
+    if ($relative -ne 'kindlespouse/config.json') { throw 'Unexpected pairing path.' }
+    return $script:pairingText
+}
+$paired = [Guid]::NewGuid().ToString()
+$script:pairingText = @{deviceId=$paired.ToUpperInvariant()} | ConvertTo-Json -Compress
+if ((Get-PairedDeviceId $diskRoot 'unused') -ne $paired) { throw 'Paired identity was not preserved.' }
+foreach ($invalid in @($null, '{broken', '{"deviceId":"mtp-device-name"}', '{}')) {
+    $script:pairingText = $invalid
+    if ($null -ne (Get-PairedDeviceId $diskRoot 'unused')) { throw 'An unpaired identity was guessed.' }
+}
+@{pairedIdentity=$true;passed=$true;massStorage=$true;mtpStorage=$true;unsafePathsRejected=$true;credentialsProtected=$true} | ConvertTo-Json -Compress

@@ -249,44 +249,15 @@ export class CloudBridge {
     expectedHash: string,
     onVerify: () => void,
   ) {
-    return this.withConfig(accountId, async (config) => {
-      const remote = `remote:${safeRemotePath(remotePath)}`
-      await runProcess(
-        this.executable,
-        ['copyto', source, remote, '--config', config, '--immutable', '--retries', '2'],
-        { timeout: 300000 },
-      )
-      onVerify()
-      const directory = await mkdtemp(path.join(this.directory, 'cloud-check-'))
-      const copy = path.join(directory, 'verify.bin')
-      try {
-        await runProcess(
-          this.executable,
-          [
-            'copyto',
-            remote,
-            copy,
-            '--config',
-            config,
-            '--max-transfer',
-            String(MAX_BOOK_BYTES),
-            '--cutoff-mode',
-            'HARD',
-          ],
-          { timeout: 300000 },
-        )
-        if (contentHash(await readFile(copy)) !== expectedHash)
-          throw new Error('网盘文件回读校验不一致，尚未标记成功。')
-      } finally {
-        await rm(directory, { recursive: true, force: true })
-      }
-    })
+    const remote = safeRemotePath(remotePath)
+    const folder = path.posix.dirname(remote)
+    return this.uploadManyAndVerify(accountId, folder === '.' ? '' : folder, [{ source, name: path.posix.basename(remote), sha256: expectedHash }], onVerify)
   }
 
   async uploadManyAndVerify(accountId: string, folder: string, files: { source: string; name: string; sha256: string }[], onVerify: () => void) {
     if (!files.length) return
     const remote = safeRemotePath(folder)
-    if (!remote || files.length > 1000 || new Set(files.map(file => file.name)).size !== files.length || files.some(file => !file.name || safeRemotePath(file.name) !== file.name || file.name.includes('/') || !/^[a-f0-9]{64}$/.test(file.sha256))) throw new Error('批量上传文件清单无效。')
+    if (files.length > 1000 || new Set(files.map(file => file.name)).size !== files.length || files.some(file => !file.name || safeRemotePath(file.name) !== file.name || file.name.includes('/') || !/^[a-f0-9]{64}$/.test(file.sha256))) throw new Error('批量上传文件清单无效。')
     return this.withConfig(accountId, async config => {
       const directory = await mkdtemp(path.join(this.directory, 'cloud-batch-'))
       const source = path.join(directory, 'source'), verified = path.join(directory, 'verified'), list = path.join(directory, 'files.txt')

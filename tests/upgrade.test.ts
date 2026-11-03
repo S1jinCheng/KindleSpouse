@@ -409,6 +409,7 @@ test('device catalog titles resolve by identity and never replace manually chose
       titleSource: 'unresolved',
       classification: 'notebook',
       sourceKey: 'fixture',
+      origin: { kind: 'snapshot', directory: root, relative: '.notebooks/notebook-one/nbk' },
       path: 'not-read',
       sha256: 'a'.repeat(64),
       bytes: 1,
@@ -417,10 +418,10 @@ test('device catalog titles resolve by identity and never replace manually chose
       status: 'original',
     }
     store.put('notebooks', book.id, book)
-    notes.matchTitles(root)
+    await notes.matchTitles(root)
     assert.equal(notes.notebooks()[0].title, 'Actual device title')
     notes.rename(book.id, 'My custom title')
-    notes.matchTitles(root)
+    await notes.matchTitles(root)
     assert.equal(notes.notebooks()[0].title, 'My custom title')
   } finally {
     await notes.close()
@@ -457,7 +458,7 @@ test('cloud management protects sync directories and preserves the previous text
 test('Scribe notebook titles come from Nodes.title_collation with exact UUID matching and preserve manual names', async () => {
   const root = await directory(), store = new Store(root), notes = new NotebookLibrary(store, root, root, () => {})
   const identity = randomUUID(), other = randomUUID(), folder = randomUUID()
-  const notebook = (id: string): StoredNotebook => ({ id, identity: id, title: '未识别标题', titleSource: 'unresolved', classification: 'notebook', format: 'nbk', status: 'original', path: 'not-read', sourceKey: id, sha256: 'a'.repeat(64), bytes: 1, importedAt: new Date().toISOString() })
+  const notebook = (id: string): StoredNotebook => ({ id, identity: id, title: '未识别标题', titleSource: 'unresolved', classification: 'notebook', format: 'nbk', status: 'original', path: 'not-read', origin: { kind: 'snapshot', directory: root, relative: `.notebooks/${id}/nbk` }, sourceKey: id, sha256: 'a'.repeat(64), bytes: 1, importedAt: new Date().toISOString() })
   try {
     const legacy = new DatabaseSync(path.join(root, 'cc.db'))
     legacy.exec('CREATE TABLE Entries(p_uuid TEXT,p_titles_0_nominal TEXT)')
@@ -471,17 +472,17 @@ test('Scribe notebook titles come from Nodes.title_collation with exact UUID mat
     store.put('notebooks', identity, { ...notebook(identity), identity: `urn:uuid:${identity.toUpperCase()}` })
     store.put('notebooks', other, notebook(other))
     store.put('notebooks', folder, notebook(folder))
-    notes.matchTitles(root)
+    await notes.matchTitles(root)
     assert.equal(store.get<StoredNotebook>('notebooks', identity)?.title, '课程笔记 · 第一章')
     assert.equal(store.get<StoredNotebook>('notebooks', other)?.titleSource, 'unresolved')
     assert.equal(store.get<StoredNotebook>('notebooks', folder)?.titleSource, 'unresolved')
     assert.equal(notes.titleStatus().matched, 1)
     notes.rename(identity, '我保留的名字')
-    notes.matchTitles(root)
+    await notes.matchTitles(root)
     assert.equal(store.get<StoredNotebook>('notebooks', identity)?.title, '我保留的名字')
     await writeFile(path.join(root, 'ksdk.content.db'), 'invalid SQLite data')
     await rm(path.join(root, 'cc.db'))
-    assert.match(notes.matchTitles(root).error ?? '', /读取失败/)
+    assert.match((await notes.matchTitles(root)).error ?? '', /读取失败/)
     assert.equal(store.get<StoredNotebook>('notebooks', identity)?.title, '我保留的名字')
   } finally { await notes.close(); store.close(); await rm(root, { recursive: true, force: true }) }
 })
@@ -494,7 +495,7 @@ test('cloud title indexes import before a complete notebook snapshot and reject 
   const identity = randomUUID(), base = `KindleSpouse/Sync/devices/${device.id}`
   try {
     store.put('sync-devices', device.id, device)
-    store.put('notebooks', identity, { id: identity, identity, title: '未识别标题', titleSource: 'unresolved', classification: 'notebook', format: 'nbk', status: 'original', sourceKey: identity, path: 'not-read', sha256: 'a'.repeat(64), bytes: 1, importedAt: new Date().toISOString() })
+    store.put('notebooks', identity, { id: identity, identity, title: '未识别标题', titleSource: 'unresolved', classification: 'notebook', format: 'nbk', status: 'original', sourceKey: identity, origin: { kind: 'device', deviceId: device.id, relative: `.notebooks/${identity}/nbk` }, path: 'not-read', sha256: 'a'.repeat(64), bytes: 1, importedAt: new Date().toISOString() })
     const filename = path.join(root, 'source.db'), catalog = new DatabaseSync(filename)
     catalog.exec('CREATE TABLE Nodes(uuid TEXT,title_collation TEXT,node_type TEXT)')
     catalog.prepare('INSERT INTO Nodes VALUES(?,?,?)').run(identity, 'Wireless notebook title', 'STANDALONE_NOTEBOOK')

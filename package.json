@@ -1,6 +1,6 @@
 {
   "name": "kindlespouse",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "author": "KindleSpouse contributors",
   "license": "MIT",
@@ -11,7 +11,7 @@
     "dev": "node scripts/install-fonts.mjs && node scripts/dev.mjs",
     "build": "node scripts/install-fonts.mjs && node scripts/install-reader-fonts.mjs && tsc --noEmit && vite build && node scripts/build-electron.mjs",
     "start": "electron .",
-    "test": "tsx --test tests/core.test.ts tests/upgrade.test.ts tests/sync.test.ts tests/auto-sync.test.ts tests/discovery.test.ts tests/source.test.ts tests/koreader.test.ts tests/formats.test.ts tests/library-filters.test.ts tests/annotation-edits.test.ts tests/sleep-cover.test.ts tests/device-content.test.ts tests/library-cloud.test.ts tests/native-kindle.test.ts tests/companion-setup.test.ts tests/profile-directory.test.ts",
+    "test": "tsx --test tests/core.test.ts tests/upgrade.test.ts tests/sync.test.ts tests/auto-sync.test.ts tests/discovery.test.ts tests/source.test.ts tests/koreader.test.ts tests/formats.test.ts tests/library-filters.test.ts tests/annotation-edits.test.ts tests/sleep-cover.test.ts tests/device-content.test.ts tests/library-cloud.test.ts tests/native-kindle.test.ts tests/companion-setup.test.ts tests/profile-directory.test.ts tests/core-integrity.test.ts tests/notebook-identity.test.ts",
     "test:native-ui": "node tests/native-onboarding.mjs",
     "test:distribution": "node --import tsx tests/distribution.mjs",
     "test:e2e": "node tests/e2e.mjs",

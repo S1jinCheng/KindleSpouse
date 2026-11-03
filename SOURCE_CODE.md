@@ -8,6 +8,12 @@ Repository: https://github.com/S1jinCheng/KindleSpouse
 
 For a public binary release, provide the exact application tag or commit and its source archive alongside the installer. Preserve this file, `LICENSE`, `PRIVACY.md`, `THIRD_PARTY_NOTICES.md` and the generated dependency license directory. Build instructions are in `README.md` and the `scripts` directory.
 
+## v0.3.2 release source assets
+
+The [v0.3.2 release](https://github.com/S1jinCheng/KindleSpouse/releases/tag/v0.3.2) provides `KindleSpouse-v0.3.2-source.zip` at the exact application tag and `SHA256SUMS.txt` for the installer and application source. This release repairs file recovery, collection commit handling, queued-transfer cancellation, immutable cloud uploads, legacy profile discovery and device-scoped notebook identity. Regression checks include generated files, SQLite failure recovery and real rclone transfers against an isolated local backend. No user data is used as a test fixture.
+
+The third-party runtimes and corresponding source inputs are unchanged from v0.3.0; their source archives remain available at the v0.3.0 release linked below. The v0.3.2 installer is built from its application tag.
+
 ## v0.3.1 release source assets
 
 The [v0.3.1 release](https://github.com/S1jinCheng/KindleSpouse/releases/tag/v0.3.1) provides `KindleSpouse-v0.3.1-source.zip` at its exact application tag and `SHA256SUMS.txt` for the installer and application source. The Windows Calibre import helper and its generated-file regression tests are included in that source archive. Run the Windows tests with `calibre-debug.exe --exec-file tests/calibre-import.py`.

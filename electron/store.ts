@@ -1,4 +1,4 @@
-import { DatabaseSync } from 'node:sqlite'
+import { backup, DatabaseSync } from 'node:sqlite'
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
 
@@ -39,6 +39,10 @@ export class Store {
 
   close() {
     this.db.close()
+  }
+  async backup(filename: string) {
+    mkdirSync(path.dirname(filename), { recursive: true })
+    await backup(this.db, filename)
   }
   transaction<T>(operation: () => T): T {
     this.db.exec('BEGIN IMMEDIATE')

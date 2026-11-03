@@ -212,6 +212,7 @@ export interface StoredNotebook extends Notebook {
   pdfPath?: string
   pdfHash?: string
   sourceKey: string
+  origin?: { kind: 'device'; deviceId: string; relative: string } | { kind: 'snapshot'; directory: string; relative: string }
 }
 export interface NotesImport {
   working: boolean

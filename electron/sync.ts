@@ -367,7 +367,7 @@ export class CloudSync {
     await mkdir(directory, { recursive: true })
     await this.objects.materialize(device.accountId, this.root(), manifest, directory)
     await writeFile(path.join(directory, 'snapshot-manifest.json'), content)
-    const result = this.notes.matchTitles(directory)
+    const result = await this.notes.matchTitles(directory, device.id)
     if (result.error) throw new Error(result.error)
     this.store.put('synced-catalogs', pointer.manifest, { importedAt: new Date().toISOString() })
     return true

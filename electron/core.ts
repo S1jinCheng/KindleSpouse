@@ -284,7 +284,18 @@ export class AppCore extends EventEmitter {
   async importFile(filename: string, source = '本地导入', original?: StoredCandidate) {
     const metadata = await inspectBook(filename)
     const duplicate = this.store.list<StoredCandidate>('candidates').find((book) => isLibraryBook(book) && book.sha256 === metadata.sha256)
-    if (duplicate) return duplicate.id
+    if (duplicate) {
+      if (!await this.hasBookBytes(duplicate)) {
+        const directory = path.join(this.directory, 'candidates', randomUUID())
+        await mkdir(directory, { recursive: true })
+        const destination = path.join(directory, safeFilename(path.basename(filename), metadata.format))
+        await writeFile(destination, metadata.bytes)
+        this.rememberDamagedPath(duplicate)
+        this.store.put('candidates', duplicate.id, { ...this.book(duplicate.id), path: destination, bytes: metadata.bytes.length })
+        this.notify()
+      }
+      return duplicate.id
+    }
     const id = randomUUID()
     const directory = path.join(this.directory, 'candidates', id)
     await mkdir(directory, { recursive: true })
@@ -478,29 +489,49 @@ export class AppCore extends EventEmitter {
 
   private async collectInternal(id: string) {
     const book = this.book(id)
-    if (book.library) return
-    if (contentHash(await readFile(book.path)) !== book.sha256) throw new Error('文件已经改变，请重新导入。')
-    const destinationDirectory = path.join(this.directory, 'library', book.sha256)
-    await mkdir(destinationDirectory, { recursive: true })
-    const destination = path.join(destinationDirectory, book.filename)
-    await copyFile(book.path, destination)
-    let calibreId: number | undefined
-    if (this.snapshot().tools.calibre) {
-      const library = path.join(this.directory, 'calibre-library')
-      const output = await this.calibre('calibre-debug.exe', [
-        '--exec-file',
-        path.join(this.options.nativeDirectory, 'CalibreImport.py'),
-        '--',
-        library,
-        destination,
-        book.sha256,
-      ])
-      const result = output.match(/KINDLESPOUSE_RESULT\s+(\{[^\n]+\})/)
-      if (!result) throw new Error('Calibre 未返回入库结果，请检查程序目录。')
-      calibreId = JSON.parse(result[1]).id
+    if (book.library && !this.store.get('collection-intents', book.sha256)) return
+    const bytes = await readFile(book.path)
+    if (contentHash(bytes) !== book.sha256) throw new Error('文件已经改变，请重新导入。')
+    this.store.put('collection-intents', book.sha256, { candidateId: id, startedAt: new Date().toISOString() })
+    const staging = await mkdtemp(path.join(await this.scratch(), 'collect-'))
+    try {
+      const staged = path.join(staging, book.filename)
+      await writeFile(staged, bytes)
+      let calibreId: number | undefined
+      if (this.snapshot().tools.calibre) {
+        const output = await this.calibre('calibre-debug.exe', ['--exec-file', path.join(this.options.nativeDirectory, 'CalibreImport.py'), '--', path.join(this.directory, 'calibre-library'), staged, book.sha256])
+        const result = output.match(/KINDLESPOUSE_RESULT\s+(\{[^\n]+\})/)
+        if (!result) throw new Error('Calibre 未返回入库结果，请检查程序目录。')
+        const parsed: unknown = JSON.parse(result[1])
+        if (!parsed || typeof parsed !== 'object' || !('id' in parsed) || typeof parsed.id !== 'number' || !Number.isSafeInteger(parsed.id) || parsed.id <= 0) throw new Error('Calibre 返回了无效的图书标识。')
+        calibreId = parsed.id
+      }
+      if (contentHash(await readFile(staged)) !== book.sha256) throw new Error('入库暂存文件校验失败，原件已保留。')
+      const library = path.join(this.directory, 'library')
+      await mkdir(library, { recursive: true })
+      let directory = path.join(library, book.sha256)
+      let destination = path.join(directory, book.filename)
+      if (!await this.hasBookBytes({ ...book, path: destination })) {
+        if (existsSync(directory)) directory = path.join(library, book.sha256 + '-' + randomUUID())
+        await rename(staging, directory)
+        destination = path.join(directory, book.filename)
+      }
+      this.store.transaction(() => {
+        this.store.put('candidates', id, { ...this.book(id), path: destination, library: true, calibreId })
+        this.store.remove('collection-intents', book.sha256)
+      })
+      this.notify()
+    } finally {
+      await rm(staging, { recursive: true, force: true })
     }
-    this.store.put('candidates', id, { ...this.book(id), path: destination, library: true, calibreId })
-    this.notify()
+  }
+
+  private async hasBookBytes(book: Pick<StoredCandidate, 'path' | 'bytes' | 'sha256'>) {
+    try { return (await stat(book.path)).size === book.bytes && contentHash(await readFile(book.path)) === book.sha256 } catch { return false }
+  }
+
+  private rememberDamagedPath(book: Pick<StoredCandidate, 'path' | 'sha256'>) {
+    this.store.put('damaged-book-paths', contentHash(Buffer.from(path.resolve(book.path))), { path: path.resolve(book.path), sha256: book.sha256 })
   }
 
   private async checkUrl(value: string) {
@@ -758,6 +789,9 @@ export class AppCore extends EventEmitter {
     if (this.recovery?.working) return
     this.recovery = { working: true, books: 0, message: '正在检查私有备份' }
     this.notify()
+    const indexed = this.store.list<StoredCandidate>('candidates')
+    const collection = new Map(indexed.map(book => [book.sha256, book.library]))
+    const knownPaths = new Map([...this.store.list<{ path: string; sha256: string }>('damaged-book-paths'), ...indexed].map(book => [path.resolve(book.path), book.sha256]))
     try {
       const root = path.join(this.directory, 'device-backups')
       const snapshots = (await readdir(root, { withFileTypes: true }).catch(() => []))
@@ -779,8 +813,12 @@ export class AppCore extends EventEmitter {
           const folder = path.join(directory, item.name)
           for (const filename of (await readdir(folder)).filter(isKoreaderFilename)) {
             try {
-              const id = await this.importFile(path.join(folder, filename), '本机恢复')
-              if (base === 'library') this.store.put('candidates', id, { ...this.book(id), library: true })
+              const original = path.join(folder, filename)
+              const expected = knownPaths.get(path.resolve(original)) ?? (base === 'library' && /^[a-f0-9]{64}(?:-|$)/.test(item.name) ? item.name.slice(0, 64) : undefined)
+              if (expected && contentHash(await readFile(original)) !== expected) continue
+              const id = await this.importFile(original, '本机恢复')
+              const book = this.book(id)
+              if (base === 'library' && !this.store.get('collection-intents', book.sha256) && collection.get(book.sha256) !== false) this.store.put('candidates', id, { ...book, library: true })
             } catch {}
           }
         }
@@ -1049,6 +1087,7 @@ export class AppCore extends EventEmitter {
   private async processCloudBatch(jobs: TransferJob[]) {
     const valid: { job: TransferJob; book: StoredCandidate; remotePath: string }[] = []
     for (const job of jobs) {
+      if (this.closing || this.store.get<TransferJob>('jobs', job.id)?.status !== 'queued') continue
       try {
         this.updateJob(job.id, { status: 'importing', progress: 0.1, error: undefined, message: '正在准备书库同步' })
         const book = this.book(job.candidateId)
@@ -1246,7 +1285,12 @@ export class AppCore extends EventEmitter {
         throw new Error('快照文件校验不一致，原件已保留，请重新读取。')
       if (existing.has(entry.sha256)) {
         const book = existing.get(entry.sha256)!
-        if (!book.library) this.store.put('candidates', book.id, { ...book, library: true })
+        const valid = await this.hasBookBytes(book)
+        if (!valid) this.rememberDamagedPath(book)
+        const current = this.book(book.id)
+        const repaired = { ...current, ...(!valid && current.path === book.path ? { path: filename, bytes: entry.bytes } : {}), library: current.library || !this.store.get('collection-intents', current.sha256) }
+        this.store.put('candidates', book.id, repaired)
+        existing.set(entry.sha256, repaired)
         continue
       }
       const id = randomUUID()

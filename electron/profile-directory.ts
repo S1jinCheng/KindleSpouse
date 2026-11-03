@@ -26,7 +26,7 @@ function profileWeight(directory: string) {
   let database: DatabaseSync | undefined
   try {
     database = new DatabaseSync(filename, { readOnly: true })
-    const row = database.prepare("SELECT COUNT(*) AS total FROM records WHERE namespace IN ('candidates','clouds','sync-devices')").get()
+    const row = database.prepare("SELECT COUNT(*) AS total FROM records WHERE namespace IN ('candidates','clouds','sync-devices','notebooks','reading-notes','reading-sessions')").get()
     return Number(row?.total ?? 0)
   } catch { return 0 } finally { database?.close() }
 }

@@ -839,6 +839,7 @@ app.whenReady().then(async () => {
         await writeFile(marker, new Date().toISOString())
       }
       if (!core.snapshot().candidates.length) await core.recoverLibrary()
+      await core.notebookLibrary.recoverDeviceNotebooks()
       await core.refreshLibraryReadability()
       await core.notebookLibrary.classify()
     })().catch((error) => {

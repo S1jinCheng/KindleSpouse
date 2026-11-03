@@ -32,6 +32,23 @@ try {
   await writeFile(changed, altered)
   await assert.rejects(cloud.uploadManyAndVerify('fixture', 'KindleSpouse/Inbox', files, () => { throw new Error('A changed immutable object must not reach verification') }), /immutable/i)
   assert.deepEqual(await readFile(changed), altered)
+  const single = path.join(root, 'originals', 'single.txt')
+  const singleBytes = Buffer.from('Generated immutable single-file original')
+  const singleHash = contentHash(singleBytes)
+  await writeFile(single, singleBytes)
+  const singleRemote = '# 单本重命名 📖.txt'
+  await cloud.uploadAndVerify('fixture', single, singleRemote, singleHash, () => { verifies++ })
+  await cloud.uploadAndVerify('fixture', single, singleRemote, singleHash, () => { verifies++ })
+  assert.deepEqual(await readFile(path.join(root, 'remote', singleRemote)), singleBytes)
+  for (const length of [singleBytes.length, singleBytes.length + 7]) {
+    const edited = Buffer.alloc(length, 88)
+    await writeFile(path.join(root, 'remote', singleRemote), edited)
+    await assert.rejects(cloud.uploadAndVerify('fixture', single, singleRemote, singleHash, () => { throw new Error('Conflicting remote file reached verification') }), /immutable/i)
+    assert.deepEqual(await readFile(path.join(root, 'remote', singleRemote)), edited)
+  }
+  await writeFile(single, 'Changed source after approval')
+  await assert.rejects(cloud.uploadAndVerify('fixture', single, 'unchanged-target.txt', singleHash, () => {}), /校验失败/)
+  await assert.rejects(readFile(path.join(root, 'remote', 'unchanged-target.txt')), { code: 'ENOENT' })
   console.log(JSON.stringify({ passed: true, actualRclone: true, preservedChinesePunctuation: true, preservedEmojiAndLeadingHash: true, everyReturnedHashVerified: true, networkNotRequired: true }))
 } finally {
   await cloud.close()

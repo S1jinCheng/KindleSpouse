@@ -1,10 +1,10 @@
-# KindleSpouse v0.3.1 使用准备
+# KindleSpouse v0.3.2 使用准备
 
 ## 下载什么
 
-在 [Releases](https://github.com/S1jinCheng/KindleSpouse/releases/latest) 下载 `KindleSpouse-0.3.1-Windows-Setup.exe`。这是 Windows x64 安装版，支持 Windows 10／11。普通用户无需下载源码包，也无需安装 Node、Go 或 Python。当前安装包未做代码签名，Windows 可能显示发布者未知。
+在 [Releases](https://github.com/S1jinCheng/KindleSpouse/releases/latest) 下载 `KindleSpouse-0.3.2-Windows-Setup.exe`。这是 Windows x64 安装版，支持 Windows 10／11。普通用户无需下载源码包，也无需安装 Node、Go 或 Python。当前安装包未做代码签名，Windows 可能显示发布者未知。
 
-从 v0.3.0 升级时，先退出旧版，再运行新版安装程序，无需先卸载或重新配对 Kindle。v0.3.1 仅更新电脑端，原资料目录与网盘授权继续使用。修复后的 Calibre 入库通过临时短路径访问原书库，不搬动已有资料；无需通过 USB 更新 Kindle 组件。
+从 v0.3.0 或 v0.3.1 升级时，先退出旧版，再运行新版安装程序，无需先卸载或重新配对 Kindle。v0.3.2 更新电脑端，原资料目录与网盘授权继续使用。首次启动会在资料目录的 migration-backups 中备份数据库，再迁移可确认归属的旧笔记；手动标题与阅读位置保留。无法确认设备归属的旧记录保留，不会猜测覆盖。新的 USB 快照会记录已有配对设备身份；日常网盘同步无需重新配对。修复后的 Calibre 入库通过临时短路径访问原书库，不搬动已有资料；无需通过 USB 更新 Kindle 组件。
 
 安装后从桌面启动 KindleSpouse，进入「设置 → 我的 Kindle → 选择设备与使用方式」，按向导选择型号与原生／KOReader 增强模式。书籍、笔记、头像、书源登录和网盘授权由每位用户自行导入、登录或授权，发行包不附带这些个人资料。
 

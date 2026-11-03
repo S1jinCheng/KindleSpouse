@@ -49,3 +49,19 @@ test('isolated legacy profiles are discovered only when current profile has no b
     assert.equal(rememberedProfile(current), legacy)
   } finally { await rm(root, { recursive: true, force: true }) }
 })
+
+for (const namespace of ['notebooks', 'reading-notes', 'reading-sessions']) test(`${namespace}-only profiles are discovered and never treated as empty`, async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'KS-note-profile-'))
+  const current = path.join(root, 'current'), local = path.join(root, 'local')
+  const legacy = path.join(local, 'Packages/OpenAI.Codex_fixture/LocalCache/Roaming/KindleSpouse')
+  const store = new Store(legacy)
+  store.put(namespace, 'preserved', { id: 'preserved' })
+  store.close()
+  try {
+    assert.deepEqual(legacyProfiles(current, local), [legacy])
+    const active = new Store(current)
+    active.put(namespace, 'current', { id: 'current' })
+    active.close()
+    assert.deepEqual(legacyProfiles(current, local), [])
+  } finally { await rm(root, { recursive: true, force: true }) }
+})

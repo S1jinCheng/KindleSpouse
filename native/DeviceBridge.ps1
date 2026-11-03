@@ -68,6 +68,16 @@ function Read-DeviceText($root, [string]$relative, [string]$scratch) {
     $filename = Join-Path $scratch $name
     try { return [IO.File]::ReadAllText($filename) } finally { Remove-Item -LiteralPath $filename -Force }
 }
+function Get-PairedDeviceId($root, [string]$scratch) {
+    $text = Read-DeviceText $root 'kindlespouse/config.json' $scratch
+    if (-not $text) { return $null }
+    try {
+        $configuration = $text | ConvertFrom-Json
+        $identity = [Guid]::Empty
+        if ([Guid]::TryParse([string]$configuration.deviceId, [ref]$identity)) { return $identity.ToString() }
+    } catch { return $null }
+    return $null
+}
 function Test-ComponentPath([string]$relative, [bool]$credentials) {
     if ($relative.Contains('\')) { return $false }
     foreach ($part in $relative.Split('/')) {
@@ -222,7 +232,10 @@ try {
             $verified.Add([pscustomobject]@{relative=$name;bytes=$size;sha256=(Get-FileSha256 $filename)})
         }
         if ($verified.Count -eq 0) { throw 'No title index found. Collect notebook titles in KOReader first.' }
-        [IO.File]::WriteAllText((Join-Path $destinationPath 'snapshot-manifest.json'), (@{createdAt=[DateTime]::UtcNow.ToString('o');files=$verified} | ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false))
+        $manifest = @{createdAt=[DateTime]::UtcNow.ToString('o');files=$verified}
+        $paired = Get-PairedDeviceId (Get-StorageFolder $device) $destinationPath
+        if ($paired) { $manifest.deviceId = $paired }
+        [IO.File]::WriteAllText((Join-Path $destinationPath 'snapshot-manifest.json'), ($manifest | ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false))
         @{files=$verified.Count;directory=$destinationPath} | ConvertTo-Json -Compress
         exit 0
     }
@@ -251,6 +264,8 @@ try {
             $verified.Add([pscustomobject]@{ relative=$file.relative; bytes=$file.bytes; sha256=(Get-FileSha256 $localPath) })
         }
         $manifest = @{ createdAt=[DateTime]::UtcNow.ToString('o'); files=$verified }
+        $paired = Get-PairedDeviceId $rootFolder $destinationPath
+        if ($paired) { $manifest.deviceId = $paired }
         [IO.File]::WriteAllText((Join-Path $destinationPath 'snapshot-manifest.json'), ($manifest | ConvertTo-Json -Depth 8), [Text.UTF8Encoding]::new($false))
         @{ files=$verified.Count; directory=$destinationPath } | ConvertTo-Json -Compress
         exit 0
