@@ -95,7 +95,11 @@ function Companion:summary(progress)
         if progress.titlesOnly then return "Notebook titles synced. Full backup remains paused." end
         return string.format("Sync complete: %d books received, %d files backed up.", tonumber(progress.received) or 0, tonumber(progress.files) or 0)
     end
-    if progress.state == "failed" then return "Sync stopped: " .. tostring(progress.error or "Check Wi-Fi and retry.") end
+    if progress.state == "failed" then
+        local received = tonumber(progress.received) or 0
+        local prefix = received > 0 and string.format("%d books ready. Other sync stopped: ", received) or "Sync stopped: "
+        return prefix .. tostring(progress.error or "Check Wi-Fi and retry.")
+    end
     local text = stages[progress.stage] or "Starting background sync"
     local done, total = tonumber(progress.done) or 0, tonumber(progress.total) or 0
     if total > 0 then text = text .. string.format(" (%d/%d)", done, total)
@@ -140,6 +144,7 @@ function Companion:syncProfile()
 end
 
 function Companion:init()
+    require("touch_input").prepare()
     self.ui.menu:registerToMainMenu(self)
     if self.ui.registerPostInitCallback then require("home").install(self) end
     UIManager:scheduleIn(2, function() self:applyAnnotations() end)
@@ -150,15 +155,15 @@ function Companion:init()
     end
     self.auto_receive_task = function()
         if not G_reader_settings or G_reader_settings:readSetting("kindlespouse_auto_receive") ~= false then self:receiveBooks(true) end
-        UIManager:scheduleIn(90, self.auto_receive_task)
+        UIManager:scheduleIn(30, self.auto_receive_task)
     end
-    UIManager:scheduleIn(8, self.auto_receive_task)
+    UIManager:scheduleIn(1, self.auto_receive_task)
     self.auto_sync_check = not self.ui.document
     self.auto_sync_task = function()
         self:automaticSync()
         UIManager:scheduleIn(30, self.auto_sync_task)
     end
-    UIManager:scheduleIn(6, self.auto_sync_task)
+    UIManager:scheduleIn(10, self.auto_sync_task)
 end
 
 function Companion:autoSyncEnabled()
@@ -225,8 +230,15 @@ end
 
 function Companion:receiveBooks(silent)
     if self.suspended then return end
-    if self.launch_pending or self:isRunning() or lfs.attributes(directory .. "books-pause.requested", "mode") then return end
+    if lfs.attributes(directory .. "books-pause.requested", "mode") then self.books_pending = false; return end
+    if self.launch_pending or self:isRunning() then
+        self.books_pending = true
+        self:watch(false)
+        if not silent then self:notify("KindleSpouse: book check queued after the current sync.") end
+        return
+    end
     if not NetworkMgr:isConnected() or not lfs.attributes(directory .. "config.json", "mode") then return end
+    self.books_pending = false
     self.launch_error = nil
     self.launch_started = os.time()
     local result = os.execute("sh /mnt/us/kindlespouse/sync.sh books < /dev/null > /dev/null 2>&1 &")
@@ -245,16 +257,16 @@ end
 
 function Companion:onResume()
     self.suspended = false
-    if self.auto_receive_task then UIManager:unschedule(self.auto_receive_task); UIManager:scheduleIn(8, self.auto_receive_task) end
-    if self.auto_sync_task then UIManager:unschedule(self.auto_sync_task); UIManager:scheduleIn(6, self.auto_sync_task) end
+    if self.auto_receive_task then UIManager:unschedule(self.auto_receive_task); UIManager:scheduleIn(1, self.auto_receive_task) end
+    if self.auto_sync_task then UIManager:unschedule(self.auto_sync_task); UIManager:scheduleIn(10, self.auto_sync_task) end
     if self.watch_task then UIManager:unschedule(self.watch_task); UIManager:scheduleIn(1, self.watch_task) end
 end
 
 function Companion:onNetworkConnected()
     self.retry_after = nil
     if self.suspended then return end
-    if self.auto_sync_task then UIManager:unschedule(self.auto_sync_task); UIManager:scheduleIn(6, self.auto_sync_task) end
-    if self.auto_receive_task then UIManager:unschedule(self.auto_receive_task); UIManager:scheduleIn(8, self.auto_receive_task) end
+    if self.auto_sync_task then UIManager:unschedule(self.auto_sync_task); UIManager:scheduleIn(10, self.auto_sync_task) end
+    if self.auto_receive_task then UIManager:unschedule(self.auto_receive_task); UIManager:scheduleIn(1, self.auto_receive_task) end
 end
 
 function Companion:applySleepProfile()
@@ -323,6 +335,11 @@ function Companion:watch(notify_completion)
     self.watch_task = function()
         local progress = self:status()
         if G_reader_settings then self:applySleepProfile() end
+        local received = tonumber(progress.received) or 0
+        if received > 0 and (self.received_started ~= progress.startedAt or received > (self.received_notice or 0)) then
+            self.received_started, self.received_notice = progress.startedAt, received
+            self:notify(string.format("KindleSpouse: %d new books ready.", received))
+        end
         attempts = attempts + 1
         local fresh = tonumber(progress.startedAt) and progress.startedAt >= (self.launch_started or 0)
         if self.launch_pending and not fresh and attempts >= 3 then
@@ -356,13 +373,20 @@ function Companion:watch(notify_completion)
                 self.retry_after = os.time() + math.min(60 * 2 ^ (self.retry_count - 1), 900)
             end
         end
-        if progress.state == "completed" then self:applyAnnotations() end
+        if progress.state == "completed" then
+            self:applyAnnotations()
+        end
         if self.notify_completion then
             if progress.state == "completed" then self:notify(progress.profileOnly and self:summary(progress) or progress.titlesOnly and "KindleSpouse: notebook titles synced." or "KindleSpouse: sync complete.")
             elseif progress.state == "paused" then self:notify("KindleSpouse: sync paused. Uploaded files are kept.")
+            elseif (tonumber(progress.received) or 0) > 0 then self:notify("KindleSpouse: books are ready; other sync stopped. Open Sync status for details.")
             else self:notify("KindleSpouse: sync stopped. Open Sync status for details.") end
         end
         self.notify_completion = false
+        if self.books_pending and self.auto_receive_task and not self.suspended then
+            UIManager:unschedule(self.auto_receive_task)
+            UIManager:scheduleIn(0, self.auto_receive_task)
+        end
     end
     UIManager:scheduleIn(1, self.watch_task)
 end
@@ -452,6 +476,15 @@ end
 
 function Companion:addToMainMenu(menu_items)
     menu_items.kindlespouse = { text = "KindleSpouse", sub_item_table = {
+        { text = "Return to Kindle (native reading and notebooks)", callback = function() require("home").returnToKindle(self) end },
+        { text = "Use experimental notebook editor", enabled_func = function() return not self.ui.document end,
+          checked_func = function() return G_reader_settings:isTrue("kindlespouse_experimental_notebooks") end,
+          callback = function()
+            G_reader_settings:saveSetting("kindlespouse_experimental_notebooks", not G_reader_settings:isTrue("kindlespouse_experimental_notebooks"))
+          end },
+        { text = "Enable on-screen keyboard", callback = function()
+            if require("touch_input").restore() then self:notify("KindleSpouse: on-screen keyboard enabled. Reopen the input field.") end
+          end },
         { text = "Profile and cloud sync", callback = function() require("profile").open(self) end },
         { text = "Use KindleSpouse home", enabled_func = function() return not self.ui.document end,
           checked_func = function() return G_reader_settings:readSetting("kindlespouse_home") ~= false end,

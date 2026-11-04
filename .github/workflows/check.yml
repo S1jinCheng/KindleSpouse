@@ -35,6 +35,7 @@ jobs:
         env:
           KINDLESPOUSE_TEST_RCLONE: rclone
       - run: lua5.4 tests/companion-ui.lua
+      - run: lua5.4 tests/touch-input.lua
       - run: lua5.4 tests/reader-bridge.lua
       - run: lua5.4 tests/reader-switch.lua
       - run: lua5.4 tests/annotation-apply.lua
@@ -54,6 +55,9 @@ jobs:
           go build -trimpath -o ../tools/companion/kindlespouse-link.exe ./cmd/lan-identity
           GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -trimpath -o ../tools/companion/kindlespouse-sync .
         working-directory: native/companion
+      - run: node tests/receive-priority.mjs
+        env:
+          KINDLESPOUSE_TEST_RCLONE: rclone
       - run: node node_modules/tsx/dist/cli.mjs tests/local-profile.mts
         env:
           KINDLESPOUSE_TEST_RCLONE: rclone

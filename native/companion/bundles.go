@@ -218,6 +218,9 @@ func (a *Agent) uploadBundles(objects map[string]string, known map[string]int64)
 			return err
 		}
 		created = append(created, bundle)
+		if err := a.yieldBooks(time.Now()); err != nil {
+			return err
+		}
 		group, size = nil, 0
 		return nil
 	}
@@ -242,21 +245,30 @@ func (a *Agent) uploadBundles(objects map[string]string, known map[string]int64)
 	if err := atomicJSON(ledgerFile, append(validLedger, created...)); err != nil {
 		return nil, err
 	}
-	names := []string{}
-	for _, bundle := range created {
-		names = append(names, bundle.SHA256+".zip")
-	}
 	list := filepath.Join(a.Scratch, "bundle-files.txt")
-	if err := os.WriteFile(list, []byte(strings.Join(names, "\n")+"\n"), 0600); err != nil {
-		return nil, err
+	for offset := 0; offset < len(created); offset += 2 {
+		if err := a.yieldBooks(time.Now()); err != nil {
+			return nil, err
+		}
+		end := offset + 2
+		if end > len(created) {
+			end = len(created)
+		}
+		names := []string{}
+		for _, bundle := range created[offset:end] {
+			names = append(names, bundle.SHA256+".zip")
+		}
+		if err := os.WriteFile(list, []byte(strings.Join(names, "\n")+"\n"), 0600); err != nil {
+			return nil, err
+		}
+		a.progress("uploading_bundles", offset, len(created))
+		if _, err := a.runCommand("uploading_bundles", len(created), "copy", directory, "remote:"+a.Config.RemoteRoot+"/bundles", "--files-from-raw", list, "--immutable", "--transfers", "2", "--checkers", "2", "--buffer-size", "256k", "--multi-thread-streams", "0"); err != nil {
+			return nil, err
+		}
+		for _, bundle := range created[offset:end] {
+			a.BundleSizes[bundle.SHA256+".zip"] = bundle.Bytes
+		}
+		a.progress("uploading_bundles", end, len(created))
 	}
-	a.progress("uploading_bundles", 0, len(created))
-	if _, err := a.runCommand("uploading_bundles", len(created), "copy", directory, "remote:"+a.Config.RemoteRoot+"/bundles", "--files-from-raw", list, "--immutable", "--transfers", "2", "--checkers", "2", "--buffer-size", "256k", "--multi-thread-streams", "0"); err != nil {
-		return nil, err
-	}
-	for _, bundle := range created {
-		a.BundleSizes[bundle.SHA256+".zip"] = bundle.Bytes
-	}
-	a.progress("uploading_bundles", len(created), len(created))
 	return append(used, created...), nil
 }

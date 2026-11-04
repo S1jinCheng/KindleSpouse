@@ -7,6 +7,7 @@ for (const [source, target] of [
   ['native/tools/companion/kindlespouse-sync', 'kindlespouse/kindlespouse-sync'],
   ['native/companion/sync.sh', 'kindlespouse/sync.sh'],
   ['native/companion/plugin/main.lua', 'koreader/plugins/kindlespouse.koplugin/main.lua'],
+  ['native/companion/plugin/touch_input.lua', 'koreader/plugins/kindlespouse.koplugin/touch_input.lua'],
   ['native/companion/plugin/home.lua', 'koreader/plugins/kindlespouse.koplugin/home.lua'],
   ['native/companion/plugin/library.lua', 'koreader/plugins/kindlespouse.koplugin/library.lua'],
   ['native/companion/plugin/shelf.lua', 'koreader/plugins/kindlespouse.koplugin/shelf.lua'],

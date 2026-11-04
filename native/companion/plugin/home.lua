@@ -194,6 +194,10 @@ function Home.layout(ui, companion)
             background = Blitbuffer.COLOR_WHITE,
             show_parent = ui,
             callback = function()
+                if tab == "Notebook" and Device:isKindle() and not G_reader_settings:readSetting("kindlespouse_experimental_notebooks") then
+                    Home.returnToKindle(companion)
+                    return
+                end
                 if ui.kindlespouse_tab == tab then return end
                 ui.kindlespouse_tab = tab
                 ui:reinit(ui.file_chooser.path)

@@ -48,7 +48,9 @@
     "test:companion-formats": "node tests/companion-formats.mjs",
     "tools:sleep-cover": "node scripts/install-sleep-cover.mjs",
     "package:device": "node scripts/install-reader-fonts.mjs && node --import tsx scripts/build-device-update.mjs",
-    "package:auto-receive": "node scripts/build-auto-receive-update.mjs"
+    "package:auto-receive": "node scripts/build-auto-receive-update.mjs",
+    "test:touch-input": "node tests/touch-input.mjs",
+    "test:receive-priority": "node tests/receive-priority.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inter": "5.3.0",

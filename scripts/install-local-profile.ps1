@@ -9,7 +9,7 @@ $packagePath = [IO.Path]::GetFullPath($Package)
 $expectedHash = (Get-Content -LiteralPath ($packagePath + '.sha256') -Raw).Trim()
 if ($expectedHash -notmatch '^[a-f0-9]{64}$' -or (Get-FileHash -LiteralPath $packagePath -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expectedHash) { throw 'Connection package checksum mismatch.' }
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$allowed = @('kindlespouse/lan.json','kindlespouse/kindlespouse-sync-next','kindlespouse/sync.sh','koreader/plugins/kindlespouse.koplugin/main.lua','koreader/plugins/kindlespouse.koplugin/home.lua','koreader/plugins/kindlespouse.koplugin/library.lua','koreader/plugins/kindlespouse.koplugin/shelf.lua','koreader/plugins/kindlespouse.koplugin/profile.lua','INSTALL.txt')
+$allowed = @('kindlespouse/lan.json','kindlespouse/kindlespouse-sync-next','kindlespouse/sync.sh','koreader/plugins/kindlespouse.koplugin/main.lua','koreader/plugins/kindlespouse.koplugin/touch_input.lua','koreader/plugins/kindlespouse.koplugin/home.lua','koreader/plugins/kindlespouse.koplugin/library.lua','koreader/plugins/kindlespouse.koplugin/shelf.lua','koreader/plugins/kindlespouse.koplugin/profile.lua','INSTALL.txt')
 $archive = [IO.Compression.ZipFile]::OpenRead($packagePath)
 try {
     $seen = @{}

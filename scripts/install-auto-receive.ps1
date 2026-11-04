@@ -8,7 +8,7 @@ if (-not $staging.StartsWith(($projectRoot.TrimEnd('\') + '\'), [StringCompariso
 $packagePath = [IO.Path]::GetFullPath($Package)
 $expected = (Get-Content -LiteralPath ($packagePath + '.sha256') -Raw).Trim()
 if ((Get-FileHash -LiteralPath $packagePath -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expected) { throw 'Update checksum mismatch.' }
-$allowed = @('kindlespouse/kindlespouse-sync','kindlespouse/sync.sh','koreader/plugins/kindlespouse.koplugin/main.lua','koreader/plugins/kindlespouse.koplugin/home.lua','koreader/plugins/kindlespouse.koplugin/library.lua','koreader/plugins/kindlespouse.koplugin/shelf.lua','koreader/plugins/kindlespouse.koplugin/profile.lua')
+$allowed = @('kindlespouse/kindlespouse-sync','kindlespouse/sync.sh','koreader/plugins/kindlespouse.koplugin/main.lua','koreader/plugins/kindlespouse.koplugin/touch_input.lua','koreader/plugins/kindlespouse.koplugin/home.lua','koreader/plugins/kindlespouse.koplugin/library.lua','koreader/plugins/kindlespouse.koplugin/shelf.lua','koreader/plugins/kindlespouse.koplugin/profile.lua')
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive = [IO.Compression.ZipFile]::OpenRead($packagePath)
 try {
