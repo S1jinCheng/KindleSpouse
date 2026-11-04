@@ -60,6 +60,8 @@ io.open = function(filename, mode)
     return { read = function() return files[filename] end, close = function() end }
 end
 os.execute = function() launches = launches + 1; return 0 end
+package.path = "native/companion/plugin/?.lua;" .. package.path
+package.preload["device"] = function() return { isKindle = function() return true end, isTouchDevice = function() return true end } end
 local Companion = dofile("native/companion/plugin/main.lua")
 local function instance()
     local plugin = Companion:new { ui = { menu = { registerToMainMenu = function() end } } }
@@ -71,7 +73,7 @@ local function tick(callback)
     callback()
 end
 local plugin = instance()
-assert(tasks[plugin.auto_receive_task] == 8)
+assert(tasks[plugin.auto_receive_task] == 1)
 assert(plugin:status().state == "idle")
 files[directory .. "last-result.json"] = ""
 assert(plugin:summary(plugin:status()) ~= "")
@@ -201,13 +203,13 @@ count = launches
 local notifications = #shown
 tick(automatic.auto_receive_task)
 assert(launches == count + 1 and #shown == notifications)
-assert(tasks[automatic.auto_receive_task] == 90)
+assert(tasks[automatic.auto_receive_task] == 30)
 tick(automatic.auto_receive_task)
 assert(launches == count + 1)
 automatic:onSuspend()
 assert(not tasks[automatic.auto_receive_task])
 automatic:onResume()
-assert(tasks[automatic.auto_receive_task] == 8)
+assert(tasks[automatic.auto_receive_task] == 1)
 automatic:onCloseWidget()
 assert(not tasks[automatic.auto_receive_task])
 local auto_paused = instance()
@@ -232,7 +234,7 @@ local now = time() + 100
 os.time = function() return now end
 reader.instance = { document = {}, saveSettings = function() if save_failed then error("cannot save") end; saves = saves + 1 end }
 local full = instance()
-assert(tasks[full.auto_sync_task] == 6)
+assert(tasks[full.auto_sync_task] == 10)
 count, notifications = launches, #shown
 tick(full.auto_sync_task)
 assert(launches == count + 1 and saves == 1 and #shown == notifications)
@@ -284,10 +286,10 @@ full:automaticSync()
 full:receiveBooks(true)
 assert(launches == count + 4)
 full:onResume()
-assert(tasks[full.auto_sync_task] == 6 and tasks[full.auto_receive_task] == 8)
+assert(tasks[full.auto_sync_task] == 10 and tasks[full.auto_receive_task] == 1)
 full.retry_after = now + 900
 full:onNetworkConnected()
-assert(full.retry_after == nil and tasks[full.auto_sync_task] == 6)
+assert(full.retry_after == nil and tasks[full.auto_sync_task] == 10)
 connected = false
 tick(full.auto_sync_task)
 assert(launches == count + 4)
@@ -333,6 +335,37 @@ assert(launches == count + 1)
 put("progress.json", { state = "completed", booksOnly = true, startedAt = now })
 files[directory .. "pause.requested"] = "notes paused"
 assert(full:status().state == "completed")
+print("Companion UI passed: automatic two-way sync, safe reader flush, incremental intervals, edits during upload, retry backoff, suspend/resume, pause, nonblocking progress and independent book receipt.")
+
+files[directory .. "books-pause.requested"] = nil
+files[directory .. "pause.requested"] = nil
+put("progress.json", { state = "running", startedAt = now })
+files[directory .. "sync.lock"] = "123\n"
+files["/proc/123/cmdline"] = "/mnt/us/kindlespouse/kindlespouse-sync"
+local queued = instance()
+assert(queued:summary({ state = "failed", received = 1, error = "catalog unavailable" }):find("1 books ready", 1, true))
+queued:receiveBooks(true)
+assert(queued.books_pending and queued.watch_task)
+files[directory .. "sync.lock"] = nil
+put("progress.json", { state = "completed", startedAt = now, received = 1 })
+local before_ready = #shown
+tick(queued.watch_task)
+assert(tasks[queued.auto_receive_task] == 0 and #shown == before_ready + 1)
+local before_check = launches
+tick(queued.auto_receive_task)
+assert(launches == before_check + 1 and not queued.books_pending)
+put("progress.json", { state = "running", startedAt = now + 1, received = 1 })
+local notice_count = #shown
+files[directory .. "sync.lock"] = "123\n"
+tick(queued.watch_task)
+assert(#shown == notice_count + 1)
+tick(queued.watch_task)
+assert(#shown == notice_count + 1)
+files[directory .. "sync.lock"] = nil
+put("progress.json", { state = "completed", startedAt = now + 1, received = 1 })
+tick(queued.watch_task)
+assert(#shown == notice_count + 1)
+print("Book priority, queued retry and immediate delivery notification passed")
+
 os.time = time
 io.open, os.execute, os.remove = open, execute, remove
-print("Companion UI passed: automatic two-way sync, safe reader flush, incremental intervals, edits during upload, retry backoff, suspend/resume, pause, nonblocking progress and independent book receipt.")

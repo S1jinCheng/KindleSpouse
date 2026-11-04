@@ -1407,6 +1407,7 @@ export class AppCore extends EventEmitter {
     zip.file('kindlespouse/kindlespouse-sync-next', await readFile(path.join(this.options.nativeDirectory, 'tools/companion/kindlespouse-sync')), { unixPermissions: 0o700 })
     zip.file('kindlespouse/sync.sh', await readFile(path.join(this.options.nativeDirectory, 'companion/sync.sh')), { unixPermissions: 0o700 })
     zip.file('koreader/plugins/kindlespouse.koplugin/main.lua', await readFile(path.join(this.options.nativeDirectory, 'companion/plugin/main.lua')))
+    zip.file('koreader/plugins/kindlespouse.koplugin/touch_input.lua', await readFile(path.join(this.options.nativeDirectory, 'companion/plugin/touch_input.lua')))
     zip.file('koreader/plugins/kindlespouse.koplugin/home.lua', await readFile(path.join(this.options.nativeDirectory, 'companion/plugin/home.lua')))
     zip.file('koreader/plugins/kindlespouse.koplugin/library.lua', await readFile(path.join(this.options.nativeDirectory, 'companion/plugin/library.lua')))
     zip.file('koreader/plugins/kindlespouse.koplugin/shelf.lua', await readFile(path.join(this.options.nativeDirectory, 'companion/plugin/shelf.lua')))

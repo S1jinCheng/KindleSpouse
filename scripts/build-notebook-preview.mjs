@@ -27,7 +27,7 @@ for (const item of Object.values(archive.files)) {
     if (relative.startsWith('lua/icons/')) await output('koreader/icons/' + path.posix.basename(relative), await item.async('nodebuffer'))
   } else if (relative === 'LICENSE') await output('koreader/kindlespouse-notebook/ENGINE-LICENSE', await item.async('nodebuffer'))
 }
-for (const name of ['main.lua', 'home.lua', 'library.lua', 'shelf.lua', 'profile.lua', '_meta.lua', 'annotation_apply.lua', 'LICENSE']) await output('koreader/plugins/kindlespouse.koplugin/' + name, await readFile('native/companion/plugin/' + name))
+for (const name of ['main.lua', 'touch_input.lua', 'home.lua', 'library.lua', 'shelf.lua', 'profile.lua', '_meta.lua', 'annotation_apply.lua', 'LICENSE']) await output('koreader/plugins/kindlespouse.koplugin/' + name, await readFile('native/companion/plugin/' + name))
 for (const name of ['embedded.lua', 'gallery.lua', 'import.lua', 'engine.json', 'LICENSE']) await output('koreader/kindlespouse-notebook/' + name, await readFile('experiments/notebook/' + name))
 await output('koreader/patches/2-kindlespouse-notebook-preview.lua', await readFile('experiments/notebook/preview.lua'))
 await build({ entryPoints: ['experiments/notebook/decode.mjs'], outfile: 'native/tools/notebook-converter/export-native-vectors.mjs', bundle: true, packages: 'external', platform: 'node', format: 'esm', target: 'node24', legalComments: 'external' })

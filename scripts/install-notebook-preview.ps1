@@ -13,7 +13,7 @@ $manifest = @()
 foreach ($file in $files) {
     $relative = $file.FullName.Substring($filesRoot.Length + 1).Replace('\','/')
     $total += $file.Length
-    if ($files.Count -gt 500 -or $total -gt 300MB -or $relative.Split('/') -contains '..' -or $relative.Contains(':') -or $relative -notmatch '^koreader/(kindlespouse-notebook/.+|icons/notebook\.[^/]+\.svg|plugins/kindlespouse\.koplugin/(main\.lua|home\.lua|library\.lua|shelf\.lua|profile\.lua|_meta\.lua|annotation_apply\.lua|LICENSE)|patches/2-kindlespouse-notebook-preview\.lua|notebook/Scribe 可编辑副本/[^/]+\.scribe)$') { throw 'Unexpected preview component.' }
+    if ($files.Count -gt 500 -or $total -gt 300MB -or $relative.Split('/') -contains '..' -or $relative.Contains(':') -or $relative -notmatch '^koreader/(kindlespouse-notebook/.+|icons/notebook\.[^/]+\.svg|plugins/kindlespouse\.koplugin/(main\.lua|touch_input\.lua|home\.lua|library\.lua|shelf\.lua|profile\.lua|_meta\.lua|annotation_apply\.lua|LICENSE)|patches/2-kindlespouse-notebook-preview\.lua|notebook/Scribe 可编辑副本/[^/]+\.scribe)$') { throw 'Unexpected preview component.' }
     $manifest += @{relative=$relative;bytes=$file.Length;sha256=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()}
 }
 Add-Type -Path (Join-Path $projectRoot 'native/NativeCopy.cs')

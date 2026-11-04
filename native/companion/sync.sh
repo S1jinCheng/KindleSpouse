@@ -24,11 +24,6 @@ chmod 700 kindlespouse-sync rclone || exit 1
 chmod 600 rclone.conf config.json || exit 1
 started=$(date +%s)
 export GOMAXPROCS=1
-if [ "$1" != "profile" ] && [ "$1" != "books" ] && [ "$1" != "updates" ] && ! sh /mnt/us/kindlespouse/catalog.sh > /dev/null 2>&1; then
-    printf '{"state":"failed","stage":"syncing_titles","error":"Cannot refresh notebook titles. Try Collect notebook titles.","startedAt":%s,"updatedAt":%s}\n' "$started" "$(date +%s)" > progress.json.launch
-    mv -f progress.json.launch progress.json
-    exit 1
-fi
 if [ "$1" = "profile" ]; then
     set -- --profile-only
 elif [ "$1" = "titles" ]; then

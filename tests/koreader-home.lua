@@ -164,6 +164,16 @@ UIManager:scheduleIn(3, function() check(function()
             local original_kind, original_quit = Device.isKindle, UIManager.quit
             Device.isKindle = function() return true end
             UIManager.quit = function() quit = true end
+            local original_return, native_opened = Home.returnToKindle, false
+            Home.returnToKindle = function() native_opened = true end
+            G_reader_settings:delSetting("kindlespouse_experimental_notebooks")
+            ui.layout[#ui.layout][2].callback()
+            assert(native_opened and ui.kindlespouse_tab == "Library", "Kindle notebook tab must prefer the native editor")
+            G_reader_settings:saveSetting("kindlespouse_experimental_notebooks", true)
+            ui.layout[#ui.layout][2].callback()
+            assert(ui.kindlespouse_tab == "Notebook", "Experimental notebook UI must remain an explicit opt-in")
+            G_reader_settings:delSetting("kindlespouse_experimental_notebooks")
+            Home.returnToKindle = original_return
             Home.returnToKindle { ui = { onClose = function() closed = true end } }
             Device.isKindle, UIManager.quit = original_kind, original_quit
             assert(closed and quit, "Native notebooks must use the normal save and exit path")

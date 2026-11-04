@@ -79,6 +79,7 @@ type Agent struct {
 	CatalogObjects map[string]string
 	CatalogBundles []Bundle
 	BundleSizes    map[string]int64
+	bookCheckAt    time.Time
 }
 
 type Progress struct {
@@ -238,10 +239,14 @@ func (a *Agent) runCommand(stage string, total int, args ...string) ([]byte, err
 	}()
 	command := exec.CommandContext(ctx, binary, args...)
 	if stage != "" {
+		offset := 0
+		if a.Progress.Stage == stage {
+			offset = a.Progress.Done
+		}
 		command.Args = append(command.Args, "--stats", "2s", "--stats-log-level", "NOTICE", "--use-json-log", "--log-level", "NOTICE")
 		command.Stderr = &statsWriter{update: func(stats TransferStats) {
 			a.Progress.Bytes, a.Progress.TotalBytes, a.Progress.Speed = stats.Bytes, stats.TotalBytes, stats.Speed
-			done := stats.Transfers
+			done := offset + stats.Transfers
 			if done > total {
 				done = total
 			}
@@ -308,6 +313,19 @@ func (a *Agent) receive() (int, error) {
 	return count + additional, err
 }
 
+func (a *Agent) yieldBooks(now time.Time) error {
+	if a.bookCheckAt.IsZero() || now.Before(a.bookCheckAt.Add(30*time.Second)) {
+		return nil
+	}
+	previous := a.Progress
+	a.bookCheckAt = now
+	count, err := a.receive()
+	a.Progress = previous
+	a.Progress.Received += count
+	a.progress(previous.Stage, previous.Done, previous.Total)
+	return err
+}
+
 func (a *Agent) receiveJobs() (int, error) {
 	a.progress("checking_inbox", 0, 0)
 	out, err := a.run("lsjson", "remote:"+a.Config.RemoteRoot+"/outbox", "--files-only", "--max-depth", "1")
@@ -332,7 +350,11 @@ func (a *Agent) receiveJobs() (int, error) {
 		received[r.JobID] = r.SHA256
 	}
 	cache := a.loadBookJobs()
-	previousCount := len(receipts.Books)
+	if len(receipts.Books) > 0 {
+		if err := a.checkpointReceipts(&receipts, &cache, true); err != nil {
+			return 0, err
+		}
+	}
 	count := 0
 	processed := 0
 	jobs := 0
@@ -407,25 +429,36 @@ func (a *Agent) receiveJobs() (int, error) {
 		}
 		count++
 		a.rememberBookJob(entry, book, filename, &cache)
+		receipts.ReceivedAt = time.Now().UTC().Format(time.RFC3339Nano)
+		if err = a.checkpointReceipts(&receipts, &cache, count == 1 || count%10 == 0); err != nil {
+			return count, err
+		}
 		processed++
 		a.Progress.Received = count
 		a.progress("receiving_books", processed, jobs)
 	}
 	a.progress("saving_receipts", 0, 0)
-	if receipts.ReceivedAt == "" || len(receipts.Books) != previousCount || count > 0 {
+	return count, a.checkpointReceipts(&receipts, &cache, true)
+}
+
+func (a *Agent) checkpointReceipts(receipts *Receipts, cache *BookJobCache, publish bool) error {
+	if receipts.ReceivedAt == "" {
 		receipts.ReceivedAt = time.Now().UTC().Format(time.RFC3339Nano)
 	}
-	data, _ := json.Marshal(receipts)
-	if err = os.WriteFile(local, data, 0600); err != nil {
-		return count, err
+	if err := atomicJSON(filepath.Join(a.Directory, "receipts.json"), receipts); err != nil {
+		return err
 	}
-	if cache.Published != sha(data) {
-		if err = a.write(a.Config.RemoteRoot+"/devices/"+a.Config.DeviceID+"/receipts.json", data); err != nil {
-			return count, err
+	data, err := json.Marshal(receipts)
+	if err != nil {
+		return err
+	}
+	if publish && cache.Published != sha(data) {
+		if err := a.write(a.Config.RemoteRoot+"/devices/"+a.Config.DeviceID+"/receipts.json", data); err != nil {
+			return err
 		}
 		cache.Published = sha(data)
 	}
-	return count, atomicJSON(filepath.Join(a.Directory, "book-job-cache.json"), cache)
+	return atomicJSON(filepath.Join(a.Directory, "book-job-cache.json"), cache)
 }
 func (a *Agent) stableCopy(source, relative string) (File, string, error) {
 	info, err := os.Lstat(source)
@@ -612,6 +645,22 @@ func (a *Agent) publishCatalog() (int, error) {
 	return len(manifest.Files), nil
 }
 
+func (a *Agent) collectCatalog() error {
+	script := filepath.Join(a.Directory, "catalog.sh")
+	if _, err := os.Stat(script); errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	a.progress("syncing_titles", 0, 0)
+	ctx, cancel := context.WithTimeout(a.Context, 30*time.Second)
+	defer cancel()
+	command := exec.CommandContext(ctx, "sh", script)
+	command.Dir = a.Directory
+	if command.Run() != nil {
+		return errors.New("cannot refresh notebook titles; received books are preserved")
+	}
+	return nil
+}
+
 func execute(filename string) (map[string]any, error) { return executeMode(filename, false) }
 
 func executeMode(filename string, titlesOnly bool) (result map[string]any, resultErr error) {
@@ -686,7 +735,7 @@ func executeBackgroundMode(filename string, titlesOnly, profileOnly, booksOnly, 
 	defer cancel()
 	agent.Scratch, agent.Context = scratch, ctx
 	localProfile := false
-	if !titlesOnly && !booksOnly {
+	if profileOnly {
 		localProfile, err = agent.receiveLANProfile()
 		if err != nil {
 			return nil, err
@@ -711,12 +760,24 @@ func executeBackgroundMode(filename string, titlesOnly, profileOnly, booksOnly, 
 	if err = agent.publishInstallationReceipt(); err != nil {
 		return nil, err
 	}
-	if booksOnly {
-		count, err := agent.receive()
+	count := 0
+	if !titlesOnly && !profileOnly && !updatesOnly {
+		count, err = agent.receive()
 		if err != nil {
 			return nil, err
 		}
+	}
+	if booksOnly {
 		return map[string]any{"ok": true, "booksOnly": true, "received": count, "completedAt": time.Now().UTC().Format(time.RFC3339Nano)}, nil
+	}
+	if !titlesOnly && !profileOnly && !updatesOnly {
+		agent.bookCheckAt = time.Now()
+	}
+	if !titlesOnly && !profileOnly {
+		localProfile, err = agent.receiveLANProfile()
+		if err != nil {
+			return nil, err
+		}
 	}
 	if !titlesOnly && !localProfile {
 		agent.Progress.ProfileRoute = "cloud"
@@ -733,6 +794,9 @@ func executeBackgroundMode(filename string, titlesOnly, profileOnly, booksOnly, 
 		}
 		return map[string]any{"ok": true, "updatesOnly": true, "completedAt": time.Now().UTC().Format(time.RFC3339Nano)}, nil
 	}
+	if err = agent.collectCatalog(); err != nil {
+		return nil, err
+	}
 	catalogs, err := agent.publishCatalog()
 	if err != nil {
 		return nil, err
@@ -743,10 +807,6 @@ func executeBackgroundMode(filename string, titlesOnly, profileOnly, booksOnly, 
 		}
 		agent.Progress.Files = catalogs
 		return map[string]any{"ok": true, "titlesOnly": true, "files": catalogs, "completedAt": time.Now().UTC().Format(time.RFC3339Nano)}, nil
-	}
-	count, err := agent.receive()
-	if err != nil {
-		return nil, err
 	}
 	files, err := agent.snapshot()
 	if err != nil {
@@ -764,7 +824,7 @@ func executeBackgroundMode(filename string, titlesOnly, profileOnly, booksOnly, 
 	if err = agent.write(config.RemoteRoot+"/devices/"+config.DeviceID+"/status.json", status); err != nil {
 		return nil, err
 	}
-	return map[string]any{"ok": true, "received": count, "files": files, "completedAt": time.Now().UTC().Format(time.RFC3339Nano)}, nil
+	return map[string]any{"ok": true, "received": agent.Progress.Received, "files": files, "completedAt": time.Now().UTC().Format(time.RFC3339Nano)}, nil
 }
 func main() {
 	config := flag.String("config", "/mnt/us/kindlespouse/config.json", "configuration path")
